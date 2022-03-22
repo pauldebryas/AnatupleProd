@@ -12,7 +12,7 @@ action() {
     export ANALYSIS_PATH="$this_dir"
     export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
     export X509_USER_PROXY="$ANALYSIS_DATA_PATH/voms.proxy"
-    export CENTRAL_STORAGE="/eos/home-k/kandroso/HNLTauPrompt_Run2"
+    export CENTRAL_STORAGE="/eos/user/p/pdebryas/HNL"
     export ANALYSIS_BIG_DATA_PATH="$CENTRAL_STORAGE/tmp/$(whoami)/data"
 
     export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
