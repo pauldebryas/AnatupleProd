@@ -1,3 +1,4 @@
 /.law
 /data*
 __pycache__
+/config/test_samples.yaml

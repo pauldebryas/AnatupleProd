@@ -7,7 +7,7 @@
 git clone git@github.com:cms-hnl/HNLTauPrompt.git
 ```
 
-- Install Luigi Analysis Workflow (for workflow management) and setup the environment
+- Install Luigi Analysis Workflow (for workflow management) if not already installed and setup the environment
 ```shell
 cd HNLTauPrompt/
 source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_101 x86_64-centos7-gcc8-opt
@@ -33,8 +33,16 @@ law index --verbose
 ```shell
 law run CreateNanoSkims --version v1 --periods 2018 --print-deps -1
 ```
+- Print status of the task 
+```shell
+law run CreateNanoSkims --version v1 --periods 2018 --print-status -1
+```
+- Run task locally (useful for debugging)
+```shell
+law run CreateNanoSkims --version v1 --periods 2018 --CreateNanoSkims-workflow local
+```
 
-- Run task and the ones required by that task 
+- Run task with HTcondor (and the ones required by that task)
 ```shell
 law run CreateNanoSkims --version v1 --periods 2018
 ```

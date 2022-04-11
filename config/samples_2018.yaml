@@ -1,6 +1,8 @@
 GLOBAL:
   period: '2018'
 
+#HNL_tau
+
 HNL_tau_M-85:
   nanoAOD: /HeavyNeutrino_trilepton_M-85_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   sampleType: HNL_tau
@@ -81,3 +83,27 @@ HNL_tau_M-1000:
   sampleType: HNL_tau
   mass: 1000
   Vtau: 0.01
+
+#MC background using ' dasgoclient -query="dataset=/{name}_TuneCP5_13TeV*/RunIISummer20UL18NanoAOD*v9-106X*/NANOAODSIM"'
+
+WZ_To_3LNu:
+  nanoAOD: /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  sampleType: MC_background
+ZZ_To_4L:
+  nanoAOD: /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  sampleType: MC_background
+TTZ_To_LLNuNu:
+  nanoAOD: /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
+  sampleType: MC_background
+WW_To_2L2Nu:
+  nanoAOD: /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  sampleType: MC_background
+TTWJets_To_LNu:
+  nanoAOD: /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
+  sampleType: MC_background
+DYJets_To_LL_M-50:
+  nanoAOD: /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  sampleType: MC_background
+DYJets_To_LL_M-10to50:
+  nanoAOD: /DYJetsToLL_M-10to50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
+  sampleType: MC_background

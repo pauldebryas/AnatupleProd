@@ -100,3 +100,4 @@ common:
         - ^(n|)FsrPhoton(_.*|)$
         - ^(n|)GenDressedLepton(_.*|)$
         - ^(n|)GenIsolatedPhoton(_.*|)$
+        - ^(n|)FatJet(_.*|)$
