@@ -1,4 +1,8 @@
 common:
+    sampleType:
+        - MC_background
+        - HNL_tau
+        - data
     exclude_columns:
         - Jet_btagDeepCvB
         - Jet_btagDeepCvL
@@ -101,3 +105,18 @@ common:
         - ^(n|)GenDressedLepton(_.*|)$
         - ^(n|)GenIsolatedPhoton(_.*|)$
         - ^(n|)FatJet(_.*|)$
+
+lepselection:
+    sampleType:
+        - MC_background
+        - data
+    selection: "
+     auto taus = Tau_pt[Tau_eta < 2.3 && Tau_eta > -2.3  && Tau_idDeepTau2017v2p1VSmu >= 2 && Tau_idDeepTau2017v2p1VSjet >= 2 && Tau_idDeepTau2017v2p1VSe >= 2];
+     auto electrons = Electron_pt[Electron_pt > 20. && Electron_eta < 2.5 && Electron_eta > -2.5 && (Electron_mvaFall17V2Iso_WP90 > 0 || Electron_mvaFall17V2noIso_WP90 > 0)];
+     auto muons = Muon_pt[Muon_pt > 18. && Muon_eta < 2.4 && Muon_eta > -2.4 && (Muon_mediumId > 0 || Muon_tightId > 0) && Muon_pfRelIso03_all < 0];
+     int n_taus = taus.size();
+     int n_electrons = electrons.size();
+     int n_muons = muons.size();
+     return n_taus >= 1 && (n_electrons + n_muons + n_taus >= 3);
+     "
+      

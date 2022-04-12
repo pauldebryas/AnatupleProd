@@ -214,6 +214,8 @@ class CreateNanoSkims(BaseTask, HTCondorWorkflow, law.LocalWorkflow):
             skim_config = yaml.safe_load(f)
         exclude_columns = ','.join(skim_config['common']['exclude_columns'])
         output_files = []
+        selection = skim_config['lepselection']['selection']
+        sampleType_selection = skim_config['lepselection']['sampleType']
         os.makedirs(self.local_central_path(), exist_ok=True)
         for n, input_file_remote in enumerate(input_file_remotes):
             adler32 = alder_list[n]
@@ -225,9 +227,14 @@ class CreateNanoSkims(BaseTask, HTCondorWorkflow, law.LocalWorkflow):
             # First copy files locally 
             xrd_copy(input_file_remote, input_file_local, expected_adler32sum=adler32, silent=False)
             # Then skim each file individually
-            sh_call(['skim_tree.py', '--input', input_file_local, '--output', output_file, '--input-tree', 'Events',
-                     '--other-trees', 'LuminosityBlocks,Runs',
-                     '--exclude-columns', exclude_columns, '--verbose', '1'], verbose=1)
+            if sampleType in sampleType_selection:
+                sh_call(['skim_tree.py', '--input', input_file_local, '--output', output_file, '--input-tree', 'Events',
+                        '--other-trees', 'LuminosityBlocks,Runs', '--sel', selection,
+                        '--exclude-columns', exclude_columns, '--verbose', '1'], verbose=1)
+            else:
+                sh_call(['skim_tree.py', '--input', input_file_local, '--output', output_file, '--input-tree', 'Events',
+                        '--other-trees', 'LuminosityBlocks,Runs',
+                        '--exclude-columns', exclude_columns, '--verbose', '1'], verbose=1)
             os.remove(input_file_local)
             output_files.append(output_file)
         output_path = self.output().path
