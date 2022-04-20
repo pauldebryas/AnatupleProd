@@ -47,6 +47,11 @@ law run CreateNanoSkims --version v1 --periods 2018 --CreateNanoSkims-workflow l
 law run CreateNanoSkims --version v1 --periods 2018
 ```
 
+- If you want to limit the number of jobs running simultaneously (EOS space management)
+```shell
+law run CreateNanoSkims --version v1 --periods 2018 --CreateNanoSkims-parallel-jobs 100
+```
+
 ## Helpers to monitor results
 
 - Produce 2 htlm files which contain information on the root file (doc= description of branches, size= exhaustive description of file's size) 

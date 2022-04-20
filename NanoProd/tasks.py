@@ -15,7 +15,7 @@ from run_tools.sh_tools import sh_call, xrd_copy
 class BaseTask(Task):
     dataset_tier = luigi.Parameter(default='nanoAOD')
     ignore_missing_samples = luigi.BoolParameter(default=False)
-    max_size_limit = luigi.Parameter(default='10000000000') # [bytes] Limit for the sum of all the file size in a single batch
+    max_size_limit = luigi.Parameter(default='20000000000') # [bytes] Limit for the sum of all the file size in a single batch
 
 # Task to create a json file in which are stored all the dataset info (size, nevents, DAS path for each files) specified in config/samples_*.yalm input file
 # LocalWorkflow ==> this task that should run locally 
