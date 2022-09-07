@@ -1,5 +1,7 @@
 /.law
+/CoffeaAnalysis/results/*
 /data*
 __pycache__
-/config/test_samples.yaml
+__init__.py
+.DS_Store
 *.html
