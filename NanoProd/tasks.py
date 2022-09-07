@@ -51,6 +51,8 @@ class CreateDatasetInfos(BaseTask, law.LocalWorkflow):
             self.publish_message("Missing samples: {}".format(', '.join(missing_samples)))
             if not self.ignore_missing_samples:
                 raise RuntimeError("Missing samples has been detected.")
+        if branches == {}:
+            self.publish_message("CreateDatasetInfos Warning: branches are empty")
         return branches
 
     # output path for the json file
@@ -227,14 +229,11 @@ class CreateNanoSkims(BaseTask, HTCondorWorkflow, law.LocalWorkflow):
             # First copy files locally 
             xrd_copy(input_file_remote, input_file_local, expected_adler32sum=adler32, silent=False)
             # Then skim each file individually
+            skim_tree_cmd = [ 'python3', os.path.join(os.environ["ANALYSIS_PATH"], "scripts", "skim_tree.py"), '--input', input_file_local, '--output', output_file, '--input-tree', 'Events',
+                             '--other-trees', 'LuminosityBlocks,Runs', '--exclude-columns', exclude_columns, '--verbose', '1' ]
             if sampleType in sampleType_selection:
-                sh_call(['skim_tree.py', '--input', input_file_local, '--output', output_file, '--input-tree', 'Events',
-                        '--other-trees', 'LuminosityBlocks,Runs', '--sel', selection,
-                        '--exclude-columns', exclude_columns, '--verbose', '1'], verbose=1)
-            else:
-                sh_call(['skim_tree.py', '--input', input_file_local, '--output', output_file, '--input-tree', 'Events',
-                        '--other-trees', 'LuminosityBlocks,Runs',
-                        '--exclude-columns', exclude_columns, '--verbose', '1'], verbose=1)
+                skim_tree_cmd.extend(['--sel', selection])
+            sh_call(skim_tree_cmd, verbose=1)
             os.remove(input_file_local)
             output_files.append(output_file)
         output_path = self.output().path
@@ -242,7 +241,7 @@ class CreateNanoSkims(BaseTask, HTCondorWorkflow, law.LocalWorkflow):
         if len(output_files) > 1:
             output_tmp = output_path + '.tmp.root'
             #Finaly, hadd the skimmed root files together
-            sh_call(['haddnano.py', output_tmp] + output_files, verbose=1)
+            sh_call(['python3', os.path.join(os.environ["ANALYSIS_PATH"], "scripts", "haddnano.py"), output_tmp] + output_files, verbose=1)
             for f in output_files:
                 os.remove(f)
         elif len(output_files) == 1:

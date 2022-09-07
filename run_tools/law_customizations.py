@@ -61,6 +61,13 @@ class Task(law.Task):
 
     def local_target(self, *path):
         return law.LocalFileTarget(self.local_path(*path))
+    
+    def local_analysis_path(self, *path):
+        parts = (self.ana_path(),) + self.store_parts() + path
+        return os.path.join(*parts)
+
+    def local_analysis_target(self, *path):
+        return law.LocalFileTarget(self.local_analysis_path(*path))
 
 
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
@@ -93,7 +100,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # maximum runtime
         config.custom_content.append(("+MaxRuntime", int(math.floor(self.max_runtime * 3600)) - 1))
         # copy the entire environment
-        config.custom_content.append(("getenv", "true"))
+        #config.custom_content.append(("getenv", "true"))
 
         log_path = os.path.join(ana_path, "data", "logs")
         os.makedirs(log_path, exist_ok=True)

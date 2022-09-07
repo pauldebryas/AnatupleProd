@@ -34,8 +34,10 @@ def adler32sum(file_name):
     block_size = 256 * 1024 * 1024
     asum = 1
     with open(file_name, 'rb') as f:
-        while (data := f.read(block_size)):
+        data = f.read(block_size)
+        while (data):
             asum = zlib.adler32(data, asum)
+            data = f.read(block_size)
     return asum
 
 def xrd_copy(input_file_name, local_name, n_retries=4, n_retries_xrdcp=4, n_streams=1, retry_sleep_interval=10,
