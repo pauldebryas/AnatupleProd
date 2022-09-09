@@ -1,5 +1,6 @@
 /.law
 /data*
 __pycache__
+__init__.py
 /config/test_samples.yaml
 *.html
