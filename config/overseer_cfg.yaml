@@ -1,0 +1,40 @@
+cmsswPython: RunKit/nanoProdWrapper.py
+params:
+  customise: HNLTauPrompt/NanoProd/customiseNano.customise
+  skimCfg: skim_v10.yaml
+  maxEvents: -1
+splitting: FileBased
+unitsPerJob: 4
+scriptExe: RunKit/nanoProdCrabJob.sh
+outputFiles:
+  - nano.root
+filesToTransfer:
+  - RunKit/nanoProdCrabJob.sh
+  - RunKit/nanoProdCrabJob.py
+  - RunKit/skim_tree.py
+  - RunKit/sh_tools.py
+  - HNLTauPrompt/NanoProd/config/skim.yaml
+
+
+# Update destination site and paths before launching a production
+# site: T3_CH_CERNBOX
+#crabOutput: /store/user/kandroso/hnl-prod
+#localCrabOutput: /eos/home-k/kandroso/hnl-prod
+#finalOutput: /eos/home-p/pdebryas/HNL/nanoV10
+
+maxMemory: 2500
+numCores: 1
+inputDBS: global
+allowNonValid: False
+dryrun: False
+maxResubmitCount: 2
+maxRecoveryCount: 2
+updateInterval: 60 # minutes
+postProcessing:
+  lawTask: CrabNanoProdTaskPostProcess
+  workflow: htcondor
+  bootstrap: bootstrap.sh
+postProcessingDoneFlag: post_processing_done.txt
+#  requirements: ( (OpSysAndVer =?= "CentOS7") || (OpSysAndVer =?= "CentOS8") )
+targetOutputFileSize: 2048
+renewKerberosTicket: True

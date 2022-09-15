@@ -1,5 +1,5 @@
 GLOBAL:
-  period: '2018'
+  era: 'Run2_2018'
 
 #HNL_tau
 
@@ -298,7 +298,7 @@ TT_To_Hadronic:
 W_To_TauNu_M-200:
   nanoAOD: /WToTauNu_M-200_TuneCP5_13TeV-pythia8-tauola/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
   miniAOD: /WToTauNu_M-200_TuneCP5_13TeV-pythia8-tauola/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM
-  sampleType: MC_backround
+  sampleType: MC_background
 W_To_MuNu_M-200:
   nanoAOD: /WToMuNu_M-200_TuneCP5_13TeV-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
   miniAOD: /WToMuNu_M-200_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM
@@ -448,7 +448,7 @@ ttH_To_TauTau_M125:
   sampleType: MC_background
 
 
-#Data (nanoAOD using [ dasgoclient -query="dataset=/{name_of_the_trigger}/Run2018*UL*MiniAODv2_NanoAODv9-v*/NANOAOD"  ] and 
+#Data (nanoAOD using [ dasgoclient -query="dataset=/{name_of_the_trigger}/Run2018*UL*MiniAODv2_NanoAODv9-v*/NANOAOD"  ] and
 #miniAOD using [ dasgoclient -query="dataset=/{name_of_the_trigger}/Run2018*-UL2018_MiniAODv2_GT36-v*/MINIAOD" ])
 
 #SingleMuon
@@ -503,6 +503,10 @@ Tau_2018C:
 Tau_2018D:
   nanoAOD: /Tau/Run2018D-UL2018_MiniAODv2_NanoAODv9-v2/NANOAOD
   miniAOD: /Tau/Run2018D-UL2018_MiniAODv2-v1/MINIAOD
+  sampleType: data
+  miniAOD_ignoreFiles:
+    - /store/data/Run2018D/Tau/MINIAOD/UL2018_MiniAODv2-v1/240000/85725A5B-F5E3-7A44-BDBD-7812E48A9733.root
+
 
 #MET
 MET_2018A:
