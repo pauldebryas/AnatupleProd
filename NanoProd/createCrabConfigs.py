@@ -6,6 +6,7 @@ def create_crab_configs(samples_cfg, output_dir):
   with open(samples_cfg, 'r') as f:
     samples = yaml.safe_load(f)
   outputs = {}
+  all_samples = set()
   era = None
   for sample_name, sample_desc in samples.items():
     try:
@@ -19,6 +20,7 @@ def create_crab_configs(samples_cfg, output_dir):
         'inputDataset': sample_desc['miniAOD'],
         'ignoreFiles': sample_desc.get('miniAOD_ignoreFiles', [])
       }
+      all_samples.add(sample_desc['miniAOD'])
     except:
       print(f'Error while parsing {sample_name} entry.')
       raise
@@ -27,9 +29,11 @@ def create_crab_configs(samples_cfg, output_dir):
     store_failed = sample_type != 'data'
     config = {
       'config': {
-        'sampleType': mc_data,
-        'era': era,
-        'storeFailed': store_failed,
+        'params': {
+          'sampleType': mc_data,
+          'era': era,
+          'storeFailed': store_failed,
+        }
       }
     }
     data = { }
@@ -43,6 +47,9 @@ def create_crab_configs(samples_cfg, output_dir):
       yaml.safe_dump(config, f)
       f.write('\n')
       yaml.safe_dump(data, f)
+  with open(os.path.join(output_dir, "all_samples.txt"), 'w') as f:
+    for sample in sorted(all_samples):
+      f.write(sample + '\n')
 
 if __name__ == "__main__":
   import argparse
