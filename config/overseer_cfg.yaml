@@ -13,7 +13,7 @@ filesToTransfer:
   - RunKit/nanoProdCrabJob.py
   - RunKit/skim_tree.py
   - RunKit/sh_tools.py
-  - HNLTauPrompt/NanoProd/config/skim.yaml
+  - HNLTauPrompt/config/skim_v10.yaml
 
 
 # Update destination site and paths before launching a production
@@ -21,6 +21,11 @@ filesToTransfer:
 #crabOutput: /store/user/kandroso/hnl-prod
 #localCrabOutput: /eos/home-k/kandroso/hnl-prod
 #finalOutput: /eos/home-p/pdebryas/HNL/nanoV10
+site: T2_CH_CERN
+crabOutput: /store/group/phys_tau/kandroso/DeepTau_v2p5_UL18_3l_prod
+finalOutput: /eos/cms/store/group/phys_tau/kandroso/DeepTau_v2p5_UL18_3l
+localCrabOutput: /eos/cms/store/group/phys_tau/kandroso/DeepTau_v2p5_UL18_3l_prod
+
 
 maxMemory: 2500
 numCores: 1
@@ -38,3 +43,9 @@ postProcessingDoneFlag: post_processing_done.txt
 #  requirements: ( (OpSysAndVer =?= "CentOS7") || (OpSysAndVer =?= "CentOS8") )
 targetOutputFileSize: 2048
 renewKerberosTicket: True
+whitelistFinalRecovery:
+  - T1_DE_KIT
+  - T2_CH_CERN
+  - T2_DE_DESY
+  - T2_IT_Legnaro
+  - T3_CH_PSI

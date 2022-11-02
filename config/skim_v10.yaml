@@ -82,18 +82,7 @@ column_filters:
   - drop Tau_puCorr
   - drop Tau_chargedIso
   - drop Tau_neutralIso
-  - drop boostedTau_rawMVAoldDMdR032017v2
-  - drop boostedTau_rawAntiEle2018
-  - drop boostedTau_rawMVAnewDM2017v2
-  - drop boostedTau_rawMVAoldDM2017v2
-  - drop ^boostedTau_leadTk.*$
-  - drop boostedTau_puCorr
-  - drop boostedTau_chargedIso
-  - drop boostedTau_neutralIso
-  - drop boostedTau_rawIso
-  - drop boostedTau_rawIsodR03
-  - drop boostedTau_photonsOutsideSignalCone
-  - drop boostedTau_rawAntiEleCat2018
+  - drop ^(n|)boostedTau(_.*|)$
   - drop ^(n|)SV(_.*|)$
   - drop ^(n|)OtherPV(_.*|)$
   - drop ^(n|)Photon(_.*|)$
@@ -137,24 +126,20 @@ column_filters_for_failed:
   - keep ^Pileup_(nPU|nTrueInt)$
 
 selection: "
-  auto loose_electrons = Electron_pt > 10 && abs(Electron_dz) < 0.2 && abs(Electron_dxy) < 0.045
+  auto loose_electrons = Electron_pt > 8 && abs(Electron_dz) < 0.2 && abs(Electron_dxy) < 0.045
                          && (Electron_mvaIso_WP90 || (Electron_mvaNoIso_WP90 && Electron_pfRelIso03_all < 0.5));
-  auto loose_muons = Muon_pt > 5 && abs(Muon_dz) < 0.2 && abs(Muon_dxy) < 0.045
+  auto loose_muons = Muon_pt > 8 && abs(Muon_dz) < 0.2 && abs(Muon_dxy) < 0.045
                      && (Muon_mediumId || Muon_tightId || Muon_highPtId)
                      && ( Muon_pfRelIso03_all < 0.5 || Muon_pfRelIso04_all < 0.5 || Muon_tkRelIso < 0.5);
   auto loose_taus = Tau_pt > 15 && abs(Tau_dz) < 0.2 && Tau_decayMode != 5 && Tau_decayMode != 6
                     && ( (Tau_idDeepTau2017v2p1VSmu > 0 && Tau_idDeepTau2017v2p1VSjet > 0 && Tau_idDeepTau2017v2p1VSe > 0)
                         || (Tau_idDeepTau2018v2p5VSmu > 0 && Tau_idDeepTau2018v2p5VSjet > 0 && Tau_idDeepTau2018v2p5VSe > 0));
-  auto loose_boostedTaus = boostedTau_pt > 40 && abs(boostedTau_dz) < 0.2 && boostedTau_decayMode != 5 && boostedTau_decayMode != 6
-                           && boostedTau_idMVAnewDM2017v2 > 0;
   auto tight_electrons = loose_electrons && (Electron_mvaIso_WP80 || (Electron_mvaNoIso_WP80 && Electron_pfRelIso03_all < 0.15));
   auto tight_muons = loose_muons && ( Muon_pfRelIso03_all < 0.15 || Muon_pfRelIso04_all < 0.15 || Muon_tkRelIso < 0.15);
   auto tight_taus = loose_taus && (Tau_idDeepTau2017v2p1VSjet >= 4 || Tau_idDeepTau2018v2p5VSjet >= 4); /*Loose WP*/
-  auto tight_boostedTaus = loose_boostedTaus && boostedTau_idMVAnewDM2017v2 >= 4; /*Medium WP*/
 
-  int n_loose_taus = Tau_pt[loose_taus].size() + boostedTau_pt[loose_boostedTaus].size();
+  int n_loose_taus = Tau_pt[loose_taus].size();
   int n_loose = Electron_pt[loose_electrons].size() + Muon_pt[loose_muons].size() + n_loose_taus;
-  int n_tight = Electron_pt[tight_electrons].size() + Muon_pt[tight_muons].size()
-                + Tau_pt[tight_taus].size() + boostedTau_pt[tight_boostedTaus].size();
+  int n_tight = Electron_pt[tight_electrons].size() + Muon_pt[tight_muons].size() + Tau_pt[tight_taus].size();
   return n_loose_taus >= 1 && n_loose >=3 && n_tight >= 1;
   "
