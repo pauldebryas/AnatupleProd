@@ -203,12 +203,15 @@ ZZTo2Q2L:
   nanoAOD: /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
   miniAOD: /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: VV
+  miniAOD_ignoreFiles:
+    - /store/mc/RunIISummer20UL18MiniAODv2/ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/260000/81BC34FA-814B-0847-8DD0-D5AEF26E2BC9.root
 ZZTo2Q2Nu:
   nanoAOD: /ZZTo2Q2Nu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
   miniAOD: /ZZTo2Q2Nu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: VV
   miniAOD_ignoreFiles:
     - /store/mc/RunIISummer20UL18MiniAODv2/ZZTo2Q2Nu_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/100000/48A6E787-8164-D34E-87DD-F3AA06DE7CCF.root
+    - /store/mc/RunIISummer20UL18MiniAODv2/ZZTo2Q2Nu_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/100000/897208EB-36D0-8349-9BA7-69DE7323EC47.root
 ZZTo4Q:
   nanoAOD: /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
   miniAOD: /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
@@ -760,6 +763,8 @@ QCD_HT50to100:
 QCD_HT50to100_PSWeights:
   miniAOD: /QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM
   sampleType: QCD
+  miniAOD_ignoreFiles:
+    - /store/mc/RunIISummer20UL18MiniAODv2/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/82E9025A-EB99-844D-BC0F-CE272D4CB6CA.root
 QCD_HT100to200:
   miniAOD: /QCD_HT100to200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: QCD
@@ -894,6 +899,7 @@ QCD_Pt-470To600_MuEnrichedPt5:
   miniAOD_ignoreFiles:
     - /store/mc/RunIISummer20UL18MiniAODv2/QCD_Pt-470To600_MuEnrichedPt5_TuneCP5_13TeV-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/260000/1F0C0A61-1F02-A940-B78E-030F237AE6EB.root
     - /store/mc/RunIISummer20UL18MiniAODv2/QCD_Pt-470To600_MuEnrichedPt5_TuneCP5_13TeV-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/260000/A3F844AA-8A7E-3547-BFDE-175CDD54B90A.root
+    - /store/mc/RunIISummer20UL18MiniAODv2/QCD_Pt-470To600_MuEnrichedPt5_TuneCP5_13TeV-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/260000/655C6F7D-27F7-AA42-8FF2-916BDBBE9176.root
 QCD_Pt-600To800_MuEnrichedPt5:
   miniAOD: /QCD_Pt-600To800_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: QCD
