@@ -36,6 +36,22 @@ class Task(law.Task):
                 else:
                     self.samples[period][key] = value
 
+    def load_sample_analysis(self):
+        self.samples = {}
+        self.global_sample_params = {}
+        for period in self.all_periods:
+            self.samples[period] = {}
+            sample_config = os.path.join(self.ana_path(), 'config', f'samples_{period}_analysis.yaml')
+            with open(sample_config, 'r') as f:
+                samples = yaml.safe_load(f)
+            for key, value in samples.items():
+                if(type(value) != dict):
+                    raise RuntimeError(f'Invalid sample definition period="{period}", sample_name="{key}"' )
+                if key == 'GLOBAL':
+                    self.global_sample_params[period] = value
+                else:
+                    self.samples[period][key] = value
+                    
     def store_parts(self):
         return (self.__class__.__name__, self.version)
 
@@ -62,6 +78,12 @@ class Task(law.Task):
     def local_target(self, *path):
         return law.LocalFileTarget(self.local_path(*path))
 
+    def local_analysis_path(self, *path):
+        parts = (self.ana_path(),) + self.store_parts() + path
+        return os.path.join(*parts)
+
+    def local_analysis_target(self, *path):
+        return law.LocalFileTarget(self.local_analysis_path(*path))
 
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     """
