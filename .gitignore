@@ -1,6 +1,7 @@
 /.law
 /data*
 __pycache__
+.DS_Store
 __init__.py
 /config/test_samples.yaml
 *.html

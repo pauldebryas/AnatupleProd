@@ -98,19 +98,19 @@ def get_scales_fromjson(json_file):
     return evaluator
 
 def get_correction_mu(corr_name, year, corr_type, lepton):
-    f_path_mu = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/jsonpog-integration-master-POG/POG/MUO/2018_UL/muon_Z.json'
+    f_path_mu = '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2018_UL/muon_Z.json.gz'
     ceval = correctionlib.CorrectionSet.from_file(f_path_mu)
     corr = ceval[corr_name].evaluate(year, ak.to_numpy(abs(lepton.eta)), ak.to_numpy(lepton.pt), corr_type)
     return corr
 
 def get_correction_e(corr_name, year, WP, corr_type, lepton):
-    f_path_e = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/jsonpog-integration-master-POG/POG/EGM/2018_UL/electron.json'
+    f_path_e = '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2018_UL/electron.json.gz'
     ceval = correctionlib.CorrectionSet.from_file(f_path_e)
     corr = ceval[corr_name].evaluate(year, corr_type, WP, ak.to_numpy(lepton.eta), ak.to_numpy(lepton.pt))
     return corr
 
 def get_correction_tau(corr_name, syst, lepton):
-    f_path_tau = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/jsonpog-integration-master-POG/POG/TAU/2018_UL/tau.json'
+    f_path_tau = '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/TAU/2018_UL/tau.json.gz'
     ceval = correctionlib.CorrectionSet.from_file(f_path_tau)
     if corr_name == "DeepTau2017v2p1VSe":
         corr = ceval[corr_name].evaluate(ak.to_numpy(lepton.eta), ak.to_numpy(lepton.genPartFlav), 'VLoose', syst)
@@ -125,7 +125,7 @@ def get_correction_tau(corr_name, syst, lepton):
     return corr
 
 def get_pileup_correction(events, syst):
-    f_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/jsonpog-integration-master-POG/POG/LUM/2018_UL/puWeights.json'
+    f_path = '/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2018_UL/puWeights.json.gz'
     ceval = correctionlib.CorrectionSet.from_file(f_path)
     corr = ceval['Collisions18_UltraLegacy_goldenJSON'].evaluate(ak.to_numpy(events.Pileup.nTrueInt), syst)
     return corr
