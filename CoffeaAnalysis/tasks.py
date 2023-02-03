@@ -101,8 +101,8 @@ class RunAnalysis(BaseTaskAnalysis, HTCondorWorkflow, law.LocalWorkflow):
 
     # requires RunCounter for scaling
     def workflow_requires(self):
-        return { "Counter": RunCounter.req(self) }
-    
+        return { "Counter": RunCounter.req(self, branch=0) }
+
     def requires(self):
         return self.workflow_requires()
 
@@ -202,7 +202,7 @@ class RunAnalysis(BaseTaskAnalysis, HTCondorWorkflow, law.LocalWorkflow):
         print(f'Running for region {region} and channel {channel}')
         module = importlib.import_module(f'CoffeaAnalysis.HNLAnalysis.HNLAnalysis_{channel}')
         HNLAnalysis = getattr(module, f'HNLAnalysis_{channel}')
-        
+
         result = processor.run_uproot_job(
             samples_list,
             "Events",

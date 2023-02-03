@@ -182,7 +182,7 @@ def files_from_path(path):
         return files
     else:
         files = os.listdir(path)
-        return ['/'.join([path, f]) for f in files if f.endswith('.root')]
+        return ['/'.join([path, f]) for f in files if (f.endswith('.root') and not f.startswith('.'))]
 
 # -------------------------------------------------- functions for histograms --------------------------------------------------
 
@@ -571,5 +571,5 @@ def reweight_WJets(events, stitching_weights_WJets):
         np.asarray(events.genWeight)[(events.LHE.HT >= 800) & (events.LHE.HT < 1200) & (events.LHE.Njets == int(NJets))] = events.genWeight[(events.LHE.HT >= 800) & (events.LHE.HT < 1200) & (events.LHE.Njets == int(NJets))]*stitching_weights_WJets['NJets='+str(NJets)]['HT=800to1200']
         np.asarray(events.genWeight)[(events.LHE.HT >= 1200) & (events.LHE.HT < 2500) & (events.LHE.Njets == int(NJets))] = events.genWeight[(events.LHE.HT >= 1200) & (events.LHE.HT < 2500) & (events.LHE.Njets == int(NJets))]*stitching_weights_WJets['NJets='+str(NJets)]['HT=1200to2500']
         np.asarray(events.genWeight)[(events.LHE.HT >= 2500) & (events.LHE.Njets == int(NJets))] = events.genWeight[(events.LHE.HT >= 2500) & (events.LHE.Njets == int(NJets))]*stitching_weights_WJets['NJets='+str(NJets)]['HT=2500toInf']
-        
+
     return events
