@@ -1,32 +1,34 @@
 import numpy as np
 import awkward as ak
-from coffea import processor, hist
+from coffea import processor
+import uproot
 
-from CoffeaAnalysis.HNLAnalysis.helpers import data_goodrun_lumi, import_stitching_weights, reweight_DY, reweight_WJets
-from CoffeaAnalysis.HNLAnalysis.correction_helpers import get_pileup_correction, compute_sf_tau_e, compute_sf_e, get_trigger_correction_tau
-from CoffeaAnalysis.HNLAnalysis.helpers import select_lep_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg, select_lep3, bjet_veto, charge_veto, met_veto, z_veto_ttl
-from CoffeaAnalysis.HNLAnalysis.helpers import saved_leading_tau, saved_subleading_tau, saved_leading_electron, saved_dilepton_mass_taul1_OS, saved_MET, saved_drl1l2, saved_pt_sum_l1l2l3, saved_pt_sum_l1l2MET, saved_mT_tautau, saved_mT_l1MET
+from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_Event_bjets
+from CoffeaAnalysis.HNLAnalysis.helpers import apply_golden_run, apply_reweight, apply_MET_Filter
+from CoffeaAnalysis.HNLAnalysis.correction_helpers import get_pileup_correction, compute_sf_e, compute_sf_tau_e, get_trigger_correction_tau
+from CoffeaAnalysis.HNLAnalysis.helpers import IsoElectron_mask, FinalTau_sel, delta_r, bjet_candidates
 
 class HNLAnalysis_tte(processor.ProcessorABC):
-    def __init__(self, region, stitched_list):
-        ds_axis = hist.Cat("ds", "Primary dataset")
-        acc_dict = {var: hist.Hist("Counts", ds_axis, axis) for var, axis in self.get_var_axis_pairs()}
-        acc_dict[f'n_ev_all'] = processor.defaultdict_accumulator(int)
-        acc_dict[f'sumw_all'] = processor.defaultdict_accumulator(float)
+    def __init__(self, stitched_list, tag, xsecs):
+        acc_dict = {}
         self.selections = self.get_selections()
         for selection in self.selections:
             acc_dict[f'n_ev_{selection}'] = processor.defaultdict_accumulator(int)
             acc_dict[f'sumw_{selection}'] = processor.defaultdict_accumulator(float)
-
-        acc_dict['sel_array'] = processor.column_accumulator(np.ndarray((0, 12)))
         self._accumulator = processor.dict_accumulator(acc_dict)
-        if region not in ['A','B','C','D']:
-            raise 'Value error for region argument: can be A, B, C or D'
-        self.region = region
+
         if stitched_list is None or len(stitched_list) == 0:
             raise 'Missing stitched_list in samples_2018.yaml'
         self.stitched_list = stitched_list
-    
+        if tag is None or len(tag) == 0:
+            raise 'Missing tag'
+        self.tag = tag
+        if xsecs is None:
+            raise 'Missing xsecs'
+        self.xsecs = xsecs
+        #the corresponding data sample for tte channel (HLT=DoubleTau)
+        self.dataHLT = 'Tau_2018'
+
     @property
     def accumulator(self):
         return self._accumulator
@@ -34,208 +36,91 @@ class HNLAnalysis_tte(processor.ProcessorABC):
     @staticmethod
     def get_selections():
         return [
-            '3leptons',
-            'hlt',
-            'l1sel',
-            'l2sel',
-            'l3sel',
-            'corrections',
-            'bjetveto',
-            'chargeveto',
-            'metselection',
-            'zveto'
-        ]
-    
-    @staticmethod
-    def get_var_axis_pairs():
-
-        pt_axis = hist.Bin("pt", r"$p_{T}$ [GeV]", 300, 0., 1500)
-        eta_axis = hist.Bin('eta', r'$\eta$', 30,  -3.1415927, 3.1415927)
-        phi_axis = hist.Bin('phi', r'$\phi$', 30, -3.1415927, 3.1415927)
-        mass_axis = hist.Bin("mass", r"$m_{\ell\ell}$ [GeV]", 300, 0., 1500.)
-        dr_axis = hist.Bin("dr", r"$\Delta R$", 30, 0., 5.)
-        mc_axis = hist.Bin("mc", r"Combined mass [GeV]", 300, 0., 1500.)
-        met_axis = hist.Bin("met", r"PF MET [GeV]", 30, 0., 300.)
-        mt_axis = hist.Bin("mt", r"Transverse mass [GeV]", 300, 0., 1500.)
-
-        v_a_pairs = [
-            ('pt_tau1', pt_axis),
-            ('eta_tau1', eta_axis),
-            ('phi_tau1', phi_axis),
-            ('mass_tau1', mass_axis),
-            ('pt_tau2', pt_axis),
-            ('eta_tau2', eta_axis),
-            ('phi_tau2', phi_axis),
-            ('mass_tau2', mass_axis),
-            ('pt_tau3', pt_axis),
-            ('eta_tau3', eta_axis),
-            ('phi_tau3', phi_axis),
-            ('mass_tau3', mass_axis),
-            ('pt_mu1', pt_axis),
-            ('eta_mu1', eta_axis),
-            ('phi_mu1', phi_axis),
-            ('mass_mu1', mass_axis),
-            ('pt_mu2', pt_axis),
-            ('eta_mu2', eta_axis),
-            ('phi_mu2', phi_axis),
-            ('mass_mu2', mass_axis),
-            ('pt_e1', pt_axis),
-            ('eta_e1', eta_axis),
-            ('phi_e1', phi_axis),
-            ('mass_e1', mass_axis),
-            ('pt_e2', pt_axis),
-            ('eta_e2', eta_axis),
-            ('phi_e2', phi_axis),
-            ('mass_e2', mass_axis),
-
-            ('dr_l1l2', dr_axis),
-            ('comb_mass_l1l2', mc_axis),
-            ('comb_mass_taul1', mc_axis),
-            ('met', met_axis),
-            ('pt_sum_l1l2l3', pt_axis),
-            ('pt_sum_l1l2MET', pt_axis),
-            ('mT_tautau', mt_axis),
-            ('mT_l1MET', mt_axis),
+            'init',
+            'reweight',
+            'MET_Filter',
+            'AtLeast2tau1e',
+            'NoAdditionalIsoElectron',
+            'noIsoMuon',
+            'HLT',
+            'eSelection',
+            'drTau_e',
+            'drTau2Leptons',
+            'corrections'
         ]
 
-        return v_a_pairs
-    
     # we will receive a NanoEvents instead of a coffea DataFrame
     def process(self, events):
         out = self.accumulator.identity()
         ds = events.metadata["dataset"] # dataset name
+        print('Processing: ' + ds)
 
-        # for tte channel we only consider Tau dataset
-        if 'SingleMuon_2018' in ds:
-            return out
-        if 'EGamma_2018' in ds:
-            return out
-
-       #stitching
-        if ds in self.stitched_list['DY_samples']:
-            stitching_weights_DY = import_stitching_weights('DYtoLL')
-            events = reweight_DY(events, stitching_weights_DY)
-            
-        if ds in self.stitched_list['WJets_samples']:
-            stitching_weights_WJets = import_stitching_weights('WJetsToLNu')
-            events = reweight_WJets(events, stitching_weights_WJets)
-            
         # defining the mode
         mode ='MCbackground' # default mode
 
-        if 'Tau_2018' in ds:
-            # only keep the good runs
-            goodrun_lumi = data_goodrun_lumi(ds)
-            goodrun = goodrun_lumi[:,0]
-            events = events[np.isin(events.run, goodrun)]
-            events['genWeight'] = events.run > 0
-            ds = ds[0:-1]
+        if self.dataHLT in ds:
             mode ='Data'
+            # only keep the "golden" runs
+            events = apply_golden_run(ds, events)
+            #A,B,C and D together
+            ds = ds[0:-1]
         
         if 'HNL' in ds:
             mode ='signal'
-        
-        out['sumw_all'][ds] += ak.sum(events.genWeight)
-        out['n_ev_all'][ds] += len(events)
 
-        # pileup correction: compute normalizing factor in order to keep the same number of events before and after correction (before any cut)
+        out['sumw_init'][ds] += ak.sum(events.genWeight)
+        out['n_ev_init'][ds] += len(events)
+
         if mode != 'Data':
+            #reweights events with lumi x xsec / n_events + applying stitching weights for DY and WJets samples
+            events = apply_reweight(ds, events, self.stitched_list, self.dataHLT, self.xsecs)
+            # pileup correction: compute normalizing factor in order to keep the same number of events before and after correction (before any cut)
             corr = get_pileup_correction(events, 'nominal')
             self.norm_factor = ak.sum(events.genWeight)/ak.sum(events.genWeight*corr)
+        
+        out['sumw_reweight'][ds] += ak.sum(events.genWeight)
+        out['n_ev_reweight'][ds] += len(events)
 
-        # MET filter folowing https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#2018_2017_data_and_MC_UL
-        events = events[events.Flag.goodVertices & 
-                        events.Flag.globalSuperTightHalo2016Filter & 
-                        events.Flag.HBHENoiseFilter & 
-                        events.Flag.HBHENoiseIsoFilter & 
-                        events.Flag.EcalDeadCellTriggerPrimitiveFilter & 
-                        events.Flag.BadPFMuonFilter & 
-                        events.Flag.BadPFMuonDzFilter & 
-                        #events.Flag.hfNoisyHitsFilter & 
-                        events.Flag.eeBadScFilter & 
-                        events.Flag.ecalBadCalibFilter]
+        # MET filters
+        events = apply_MET_Filter(events)
+
+        out['sumw_MET_Filter'][ds] += ak.sum(events.genWeight)
+        out['n_ev_MET_Filter'][ds] += len(events)
 
         # Reco event selection: common minimal requirement for leptons
         #tau
-        cut_tau_pt = 20. # Tau_pt > cut_tau_pt
-        cut_tau_eta = 2.5 #abs(Tau_eta) < cut_tau_eta
+        cut_tau_pt = 40. # Tau_pt > cut_tau_pt
+        cut_tau_eta = 2.1 #abs(Tau_eta) < cut_tau_eta
         cut_tau_dz = 0.2 #abs(Tau_dz) < cut_tau_dz
         cut_tau_idVSmu = 4 # idDeepTau2018v2p5VSmu >= Tight
-        cut_tau_idVSe = 3 # idDeepTau2018v2p5VSe >= VLoose
-        cut_tau_idVSjet = 5 # idDeepTau2018v2p5VSjet >= Medium
+        cut_tau_idVSe = 6 # idDeepTau2018v2p5VSe >= Tight
+        cut_tau_idVSjet = 2 # idDeepTau2018v2p5VSjet >= VVLoose
     
         #electrons
-        cut_e_pt = 25. # Electron_pt > cut_e_pt
+        cut_e_pt = 10. # Electron_pt > cut_e_pt
         cut_e_eta = 2.5 # abs(Electron_eta) < cut_e_eta
         cut_e_dz = 0.2 #abs(Electron_dz) < cut_e_dz
         cut_e_dxy = 0.045 # abs(Electron_dxy) < cut_e_dxy
-        cut_e_id = 0 # Electron_mvaIso_WP90 > cut_e_id (i.e True)
-        
+        cut_e_iso = 0.4 # Electron_pfRelIso03_all < cut_e_iso
+
         #muons
-        cut_mu_pt = 25. # Muon_pt > cut_mu_pt
+        cut_mu_pt = 10. # Muon_pt > cut_mu_pt
         cut_mu_eta = 2.4 # abs(Muon_eta) < cut_mu_eta
         cut_mu_dz = 0.2 #abs(Muon_dz) < cut_mu_dz
         cut_mu_dxy = 0.045 # abs(Muon_dxy) < cut_mu_dxy
-        cut_mu_id = 0 #(Muon_mediumId > cut_mu_id || Muon_tightId > cut_mu_id)
-        cut_mu_iso = 0.15 # Muon_pfRelIso03_all < cut_mu_iso
+        cut_mu_iso = 0.15 # Muon_pfRelIso03_all <= cut_mu_iso
 
-        if self.region == 'A':
-            #tau
-            cut_tau_idVSjet_low = 3 # VLoose <= Tau_idDeepTau2017v2p1VSjet 
-            cut_tau_idVSjet_high = 5 # Tau_idDeepTau2017v2p1VSjet < Medium
-            # + remove decay mode 5 and 6 as suggested here: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
-            events['SelTau'] = events.Tau[(events.Tau.pt > cut_tau_pt) & (np.abs(events.Tau.eta) < cut_tau_eta) & (np.abs(events.Tau.dz) < cut_tau_dz) & (events.Tau.idDeepTau2018v2p5VSmu >= cut_tau_idVSmu) & (events.Tau.idDeepTau2018v2p5VSe >= cut_tau_idVSe) & (events.Tau.idDeepTau2018v2p5VSjet < cut_tau_idVSjet_high) & (events.Tau.idDeepTau2018v2p5VSjet >= cut_tau_idVSjet_low) & (events.Tau.decayMode != 5) & (events.Tau.decayMode != 6)]
+        #tau
+        # + remove decay mode 5 and 6 as suggested here: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
+        events['SelTau'] = events.Tau[(events.Tau.pt > cut_tau_pt) & (np.abs(events.Tau.eta) < cut_tau_eta) & (np.abs(events.Tau.dz) < cut_tau_dz) & (events.Tau.idDeepTau2018v2p5VSmu >= cut_tau_idVSmu) & (events.Tau.idDeepTau2018v2p5VSe >= cut_tau_idVSe) & (events.Tau.idDeepTau2018v2p5VSjet >= cut_tau_idVSjet) & (events.Tau.decayMode != 5) & (events.Tau.decayMode != 6)]
 
-            #electrons
-            cut_e_id = 1. # Electron_mvaIso_WP90 < cut_e_id (i.e False)
-            events['SelElectron'] = events.Electron[(events.Electron.pt > cut_e_pt) & (np.abs(events.Electron.eta) < cut_e_eta) & (np.abs(events.Electron.dz) < cut_e_dz) & (np.abs(events.Electron.dxy) < cut_e_dxy) & (events.Electron.mvaIso_WP90 < cut_e_id)]
+        #electron
+        # + mvaNoIso_WP90 > 0 (i.e True)
+        events['SelElectron'] = events.Electron[(events.Electron.pt > cut_e_pt) & (np.abs(events.Electron.eta) < cut_e_eta) & (np.abs(events.Electron.dz) < cut_e_dz) & (np.abs(events.Electron.dxy) < cut_e_dxy) & (events.Electron.mvaNoIso_WP90 > 0) & (events.Electron.pfRelIso03_all < cut_e_iso)]
 
-            #muons
-            cut_mu_iso = 0.15 # Muon_pfRelIso03_all < cut_mu_iso
-            events['SelMuon'] = events.Muon[(events.Muon.pt > cut_mu_pt) & (np.abs(events.Muon.eta) < cut_mu_eta) & (np.abs(events.Muon.dz) < cut_mu_dz) & (np.abs(events.Muon.dxy) < cut_mu_dxy) & ((events.Muon.mediumId > cut_mu_id) | (events.Muon.tightId > cut_mu_id)) & (events.Muon.pfRelIso03_all < cut_mu_iso)]
-
-        if self.region == 'B':
-            #tau
-            cut_tau_idVSjet = 5 # idDeepTau2018v2p5VSjet >= Medium
-            # + remove decay mode 5 and 6 as suggested here: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
-            events['SelTau'] = events.Tau[(events.Tau.pt > cut_tau_pt) & (np.abs(events.Tau.eta) < cut_tau_eta) & (np.abs(events.Tau.dz) < cut_tau_dz) & (events.Tau.idDeepTau2018v2p5VSmu >= cut_tau_idVSmu) & (events.Tau.idDeepTau2018v2p5VSe >= cut_tau_idVSe) & (events.Tau.idDeepTau2018v2p5VSjet >= cut_tau_idVSjet) & (events.Tau.decayMode != 5) & (events.Tau.decayMode != 6)]
-
-            #electrons
-            cut_e_id = 1. # Electron_mvaIso_WP90 < cut_e_id (i.e False)
-            events['SelElectron'] = events.Electron[(events.Electron.pt > cut_e_pt) & (np.abs(events.Electron.eta) < cut_e_eta) & (np.abs(events.Electron.dz) < cut_e_dz) & (np.abs(events.Electron.dxy) < cut_e_dxy) & (events.Electron.mvaIso_WP90 < cut_e_id)]
-
-            #muons
-            cut_mu_iso = 0.15 # Muon_pfRelIso03_all < cut_mu_iso
-            events['SelMuon'] = events.Muon[(events.Muon.pt > cut_mu_pt) & (np.abs(events.Muon.eta) < cut_mu_eta) & (np.abs(events.Muon.dz) < cut_mu_dz) & (np.abs(events.Muon.dxy) < cut_mu_dxy) & ((events.Muon.mediumId > cut_mu_id) | (events.Muon.tightId > cut_mu_id)) & (events.Muon.pfRelIso03_all < cut_mu_iso)]
-
-        if self.region == 'C':
-            #tau
-            cut_tau_idVSjet_low = 3 # VLoose <= Tau_idDeepTau2017v2p1VSjet 
-            cut_tau_idVSjet_high = 5 # Tau_idDeepTau2017v2p1VSjet < Medium
-            # + remove decay mode 5 and 6 as suggested here: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
-            events['SelTau'] = events.Tau[(events.Tau.pt > cut_tau_pt) & (np.abs(events.Tau.eta) < cut_tau_eta) & (np.abs(events.Tau.dz) < cut_tau_dz) & (events.Tau.idDeepTau2018v2p5VSmu >= cut_tau_idVSmu) & (events.Tau.idDeepTau2018v2p5VSe >= cut_tau_idVSe) & (events.Tau.idDeepTau2018v2p5VSjet < cut_tau_idVSjet_high) & (events.Tau.idDeepTau2018v2p5VSjet >= cut_tau_idVSjet_low) & (events.Tau.decayMode != 5) & (events.Tau.decayMode != 6)]
-
-            #electrons
-            cut_e_id = 0 # Electron_mvaIso_WP90 > cut_e_id (i.e True)
-            events['SelElectron'] = events.Electron[(events.Electron.pt > cut_e_pt) & (np.abs(events.Electron.eta) < cut_e_eta) & (np.abs(events.Electron.dz) < cut_e_dz) & (np.abs(events.Electron.dxy) < cut_e_dxy) & (events.Electron.mvaIso_WP90 > cut_e_id)]
-
-            #muons
-            cut_mu_iso = 0.15 # Muon_pfRelIso03_all < cut_mu_iso
-            events['SelMuon'] = events.Muon[(events.Muon.pt > cut_mu_pt) & (np.abs(events.Muon.eta) < cut_mu_eta) & (np.abs(events.Muon.dz) < cut_mu_dz) & (np.abs(events.Muon.dxy) < cut_mu_dxy) & ((events.Muon.mediumId > cut_mu_id) | (events.Muon.tightId > cut_mu_id)) & (events.Muon.pfRelIso03_all < cut_mu_iso)]
-
-        if self.region == 'D':
-            #tau
-            cut_tau_idVSjet = 5 # idDeepTau2018v2p5VSjet >= Medium
-            # + remove decay mode 5 and 6 as suggested here: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
-            events['SelTau'] = events.Tau[(events.Tau.pt > cut_tau_pt) & (np.abs(events.Tau.eta) < cut_tau_eta) & (np.abs(events.Tau.dz) < cut_tau_dz) & (events.Tau.idDeepTau2018v2p5VSmu >= cut_tau_idVSmu) & (events.Tau.idDeepTau2018v2p5VSe >= cut_tau_idVSe) & (events.Tau.idDeepTau2018v2p5VSjet >= cut_tau_idVSjet) & (events.Tau.decayMode != 5) & (events.Tau.decayMode != 6)]
-
-            #electrons
-            cut_e_id = 0 # Electron_mvaIso_WP90 > cut_e_id (i.e True)
-            events['SelElectron'] = events.Electron[(events.Electron.pt > cut_e_pt) & (np.abs(events.Electron.eta) < cut_e_eta) & (np.abs(events.Electron.dz) < cut_e_dz) & (np.abs(events.Electron.dxy) < cut_e_dxy) & (events.Electron.mvaIso_WP90 > cut_e_id)]
-
-            #muons
-            cut_mu_iso = 0.15 # Muon_pfRelIso03_all < cut_mu_iso
-            events['SelMuon'] = events.Muon[(events.Muon.pt > cut_mu_pt) & (np.abs(events.Muon.eta) < cut_mu_eta) & (np.abs(events.Muon.dz) < cut_mu_dz) & (np.abs(events.Muon.dxy) < cut_mu_dxy) & ((events.Muon.mediumId > cut_mu_id) | (events.Muon.tightId > cut_mu_id)) & (events.Muon.pfRelIso03_all < cut_mu_iso)]
+        #muons 
+        # + Muon_mediumId
+        events['SelMuon'] = events.Muon[(events.Muon.pt > cut_mu_pt) & (np.abs(events.Muon.eta) < cut_mu_eta) & (np.abs(events.Muon.dz) < cut_mu_dz) & (np.abs(events.Muon.dxy) < cut_mu_dxy) & (events.Muon.mediumId > 0) & (events.Muon.pfRelIso03_all <= cut_mu_iso)]
 
         self.analyse_tte(events, out, ds, mode)
 
@@ -243,66 +128,85 @@ class HNLAnalysis_tte(processor.ProcessorABC):
 
     def analyse_tte(self, events, out, ds, mode):
 
-        # select tte events: require 2 reco Tau and 1 reco e 
-        events_tte = events[(ak.num(events.SelElectron) == 1) & (ak.num(events.SelTau) == 2)]
+        # select tte events: require at least 2 reco tau and 1 reco e 
+        events_tte = events[(ak.num(events.SelElectron) >= 1) & (ak.num(events.SelTau) >= 2)]
 
-        out[f'sumw_3leptons'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_3leptons'][ds] += len(events_tte)
+        out[f'sumw_AtLeast2tau1e'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_AtLeast2tau1e'][ds] += len(events_tte)
+        
+        # veto events with more than one electron with pfRelIso03_all <= 0.15
+        events_tte = events_tte[ IsoElectron_mask(events_tte, 1, iso_cut=0.15)]
+
+        out[f'sumw_NoAdditionalIsoElectron'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_NoAdditionalIsoElectron'][ds] += len(events_tte)
+
+        # save info if an extra electron exist (with 0.15 < pfRelIso03_all < 0.4 )
+        events_tte['nAdditionalElectron'] = ak.num(events_tte.SelElectron[events_tte.SelElectron.pfRelIso03_all > 0.15])
+
+        # remove events with more than one isolated muon (assure orthogonality with ttm tmm tem)
+        events_tte = events_tte[ak.num(events_tte.SelMuon) == 0]
+
+        out[f'sumw_noIsoMuon'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_noIsoMuon'][ds] += len(events_tte)
 
         # events should pass most efficient HLT (DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg)
         events_tte = events_tte[events_tte.HLT.DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg]
 
-        out[f'sumw_hlt'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_hlt'][ds] += len(events_tte)
+        out[f'sumw_HLT'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_HLT'][ds] += len(events_tte) 
+
+        #find electron with minimum pfRelIso03_all, in case same isolation, we take the first one by default
+        #first make sur e_pt>20
+        Sel_Electron = events_tte.SelElectron[events_tte.SelElectron.pt >= 20]
+
+        events_tte = events_tte[ak.num(Sel_Electron) >= 1]
+        Sel_Electron = Sel_Electron[ak.num(Sel_Electron) >= 1]
+        #select the one with min isolation
+        Sel_Electron = Sel_Electron[ak.min(Sel_Electron.pfRelIso03_all, axis=-1) == Sel_Electron.pfRelIso03_all]
+        Sel_Electron = Sel_Electron[:,0]
+
+        out[f'sumw_eSelection'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_eSelection'][ds] += len(events_tte) 
+
+        delta_r_cut = 0.5
+
+        # select Tau candidate with dr(electron,Tau)>0.5 
+        Tau_candidate = events_tte.SelTau[(delta_r(Sel_Electron,events_tte.SelTau)> delta_r_cut)]
+
+        #make sure at least 1 satisfy this condition
+        events_tte = events_tte[ak.num(Tau_candidate) >= 1]
+        Sel_Electron = Sel_Electron[ak.num(Tau_candidate) >= 1]
+        Tau_candidate = Tau_candidate[ak.num(Tau_candidate) >= 1]
+
+        #Tau1 is the one with the highest isolation VSJet
+        Sel_Tau1 = Tau_candidate[ak.max(Tau_candidate.rawDeepTau2018v2p5VSjet, axis=-1) == Tau_candidate.rawDeepTau2018v2p5VSjet]
+        Sel_Tau1 = Sel_Tau1[:,0]
+
+        out[f'sumw_drTau_e'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_drTau_e'][ds] += len(events_tte)
+
+        # select Tau2 candidate with dr(e,Tau)>0.5 and dr(Tau1,Tau2)>0.5  and highest isolation VSJet
+        events_tte, Sel_Electron, Sel_Tau1, Sel_Tau2 = FinalTau_sel(events_tte, Sel_Electron, Sel_Tau1)
+
+        out[f'sumw_drTau2Leptons'][ds] += ak.sum(events_tte.genWeight)
+        out[f'n_ev_drTau2Leptons'][ds] += len(events_tte)
+        
+        bjet_candidate = bjet_candidates(events_tte, Sel_Electron, Sel_Tau1, Sel_Tau2)
+
+        events_tte['nbjets'] = ak.num(bjet_candidate)
+        events_tte['bjets'] = bjet_candidate
 
         if len(events_tte) == 0:
             return
+        
+        events_tte['matchingHLTDoubleTau'] = self.matching_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg_old(events_tte, Sel_Tau1, Sel_Tau2)
 
-        # select reco tau1 and tau2 that match HLT DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg with dr(t2,t1)>0.5
-        events_tte, Sel_Tau1, Sel_Tau2 = select_lep_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg(events_tte, min_dr_cut=0.5, min_pt_cut=40.)
-
-        out[f'sumw_l1sel'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_l1sel'][ds] += len(events_tte)
-
-        out[f'sumw_l2sel'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_l2sel'][ds] += len(events_tte)
-
-        # select reco electron with dr(tau1,e)>0.5 and dr(tau2,e)>0.5 (in case there is more than 1 selected we choose the one with higher pt )
-        Sel_Electron = select_lep3(events_tte, Sel_Tau1, Sel_Tau2, type='electron', delta_r_cut = 0.5)
-
-        #removing non matching events
-        cut = (ak.num(Sel_Electron) == 1)
-        Sel_Tau1 = Sel_Tau1[cut]
-        Sel_Tau2 = Sel_Tau2[cut]
-        events_tte = events_tte[cut]
-        Sel_Electron = Sel_Electron[cut]
-
-        out[f'sumw_l3sel'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_l3sel'][ds] += len(events_tte)
-   
-        '''
-        events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron = bjet_veto(events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron)
-        out[f'sumw_bjetveto'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_bjetveto'][ds] += len(events_tte)
-
-        events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron = charge_veto(events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron)
-        out[f'sumw_chargeveto'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_chargeveto'][ds] += len(events_tte)
-
-        events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron = met_veto(events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron)
-        out[f'sumw_metselection'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_metselection'][ds] += len(events_tte)
-
-        events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron = z_veto_ttl(events_tte, Sel_Tau1, Sel_Tau2, Sel_Electron)
-        out[f'sumw_zveto'][ds] += ak.sum(events_tte.genWeight)
-        out[f'n_ev_zveto'][ds] += len(events_tte)
-        '''
-       #computing corrections
+        #computing corrections
         if mode != 'Data':
             pileup_corr = get_pileup_correction(events_tte, 'nominal')* self.norm_factor
             sf_e = compute_sf_e(Sel_Electron)
             Trigger_eff_corr_tau = get_trigger_correction_tau(Sel_Tau1)
-            # as we use DeepTau2018v2p5, we don't have corrections yet
+            # as we use DeepTau2018v2p5, we don't have corrections yet: only tau energy sf
             sf_tau1 = compute_sf_tau_e(Sel_Tau1)
             sf_tau2 = compute_sf_tau_e(Sel_Tau2)
             events_tte.genWeight = events_tte.genWeight * sf_e  * sf_tau1 * sf_tau2 * Trigger_eff_corr_tau * pileup_corr
@@ -310,19 +214,39 @@ class HNLAnalysis_tte(processor.ProcessorABC):
         out[f'sumw_corrections'][ds] += ak.sum(events_tte.genWeight)
         out[f'n_ev_corrections'][ds] += len(events_tte)
 
-        # Save histograms
-        saved_leading_tau(events_tte, Sel_Tau1, out, ds)
-        saved_subleading_tau(events_tte, Sel_Tau2, out, ds)
-        saved_leading_electron(events_tte, Sel_Electron, out, ds)
-        saved_dilepton_mass_taul1_OS(events_tte, Sel_Electron, Sel_Tau1, Sel_Tau2, out, ds)
-        saved_MET(events_tte, out, ds)
-        saved_drl1l2(events_tte, Sel_Electron, Sel_Tau1, out, ds)  #save dr_etau
-        saved_pt_sum_l1l2l3(events_tte, Sel_Electron, Sel_Tau1, Sel_Tau2, out, ds) #save pt_sum_etautau
-        saved_pt_sum_l1l2MET(events_tte, Sel_Electron, Sel_Tau1, out, ds) #save pt_sum_etauMET
-        saved_mT_tautau(events_tte, Sel_Tau1, Sel_Tau2, out, ds) #save mT_tautau
-        saved_mT_l1MET(events_tte, Sel_Electron, events_tte.MET, out, ds) #save mT_eMET
+        # Save anatuple
+        self.save_anatuple_tte(ds, events_tte, Sel_Electron, Sel_Tau1, Sel_Tau2, self.tag, mode)
 
         return events_tte
+
+    def matching_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg_old(self, events, Sel_Tau1, Sel_Tau2, min_dr_cut=0.2):
+
+        # select reco tau that match HLT
+        # Trigger tau is a tau (id == 15),abs(eta) < 2.2 and pt > 0 (HLT) with  TrigObj_filterBits for Tau: 2 = MediumChargedIso, 16 = HPS, 64 = di-tau
+        Trigger_Tau = events.TrigObj[ (abs(events.TrigObj.id) == 15) & (abs(events.TrigObj.eta) < 2.2) & ((events.TrigObj.filterBits & (2+16+64)) != 0)] 
+
+        cut_dr_mask_tau1 = delta_r(Sel_Tau1, Trigger_Tau) < min_dr_cut # remove too high dr matching
+        cut_dr_mask_tau2 = delta_r(Sel_Tau2, Trigger_Tau) < min_dr_cut # remove too high dr matching
+    
+        return (ak.num(cut_dr_mask_tau1) >= 1) & (ak.num(cut_dr_mask_tau2) >= 1) 
+
+    def save_anatuple_tte(self, ds, events, Sel_Electron, Sel_Tau1, Sel_Tau2, tag, mode):
+
+        exclude_list = ['jetIdxG','genPartIdxG']
+        
+        save_file, lst = save_anatuple_common(ds, events, tag)
+
+        #info specific to the channel
+        lst["nAdditionalElectron"] = np.array(events.nAdditionalElectron)
+        lst["matchingHLTDoubleTau"] = np.array(events.matchingHLTDoubleTau)
+
+        lst = save_anatuple_lepton(Sel_Electron, lst, exclude_list, 'Electron')
+        lst = save_anatuple_tau(events, Sel_Tau1, lst, exclude_list, mode, 'Tau1')
+        lst = save_anatuple_tau(events, Sel_Tau2, lst, exclude_list, mode, 'Tau2')
+
+        save_Event_bjets(save_file, lst, events)
+
+        return
 
     def postprocess(self, accumulator):
         return accumulator

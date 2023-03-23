@@ -35,6 +35,16 @@ class Task(law.Task):
                     self.global_sample_params[period] = value
                 else:
                     self.samples[period][key] = value
+
+    def load_xsecs(self):
+        self.xsecs = {}
+        self.xsecs_unc = {}
+        xsec_file = os.path.join(self.ana_path(), 'config', 'crossSections13TeV.yaml')
+        with open(xsec_file, 'r') as f:
+            xsec_load = yaml.safe_load(f)
+        for sample, value in xsec_load.items():
+            self.xsecs[sample] = value['crossSec']
+            self.xsecs_unc[sample] = value['unc']
                     
     def store_parts(self):
         return (self.__class__.__name__, self.version)

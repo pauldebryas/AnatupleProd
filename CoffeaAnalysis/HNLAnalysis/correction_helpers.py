@@ -5,12 +5,12 @@ import os
 
 def compute_sf_mu(Sel_Muon):
     # sf for muon following https://twiki.cern.ch/twiki/bin/view/CMS/MuonUL2018
-
+    Sel_Muon = ak.unflatten(Sel_Muon, counts= 1)
     # sf for muon with 25<pt<120 GeV
     RECO_corr_medium_pT_mu = get_correction_mu( 'NUM_TrackerMuons_DEN_genTracks', '2018_UL', 'sf', Sel_Muon)
     ID_corr_medium_pT_mu = get_correction_mu('NUM_MediumID_DEN_TrackerMuons', '2018_UL', 'sf', Sel_Muon)
     ISO_corr_medium_pT_mu = get_correction_mu('NUM_LooseRelIso_DEN_MediumID', '2018_UL', 'sf', Sel_Muon)
-    sf_medium_pT = ak.from_numpy(RECO_corr_medium_pT_mu*ID_corr_medium_pT_mu*ISO_corr_medium_pT_mu)[Sel_Muon.pt <= 120]
+    sf_medium_pT = ak.from_numpy(RECO_corr_medium_pT_mu*ID_corr_medium_pT_mu*ISO_corr_medium_pT_mu)
 
     # sf for muon with pt>120 GeV
     fRECO_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/muon/NUM_TrackerMuons_Highpt_abseta_p.json' # custom tab from twiki because sf are not in muon_Z.json
@@ -19,34 +19,34 @@ def compute_sf_mu(Sel_Muon):
     RECO_corr_high_pT_mu = ak.to_numpy(evaluator_RECO["NUM_HighPtMuons/abseta_p_value"](abs(Sel_Muon.eta), Sel_Muon.p))
     ID_corr_high_pT_mu = get_correction_mu('NUM_HighPtID_DEN_TrackerMuons', '2018_UL', 'sf', Sel_Muon)
     ISO_corr_high_pT_mu = get_correction_mu('NUM_LooseRelIso_DEN_MediumID', '2018_UL', 'sf', Sel_Muon)
-    sf_high_pT = ak.from_numpy(RECO_corr_high_pT_mu*ID_corr_high_pT_mu*ISO_corr_high_pT_mu)[Sel_Muon.pt > 120]
+    sf_high_pT = ak.from_numpy(RECO_corr_high_pT_mu*ID_corr_high_pT_mu*ISO_corr_high_pT_mu)
 
-    sf = ak.concatenate([sf_medium_pT ,sf_high_pT], axis=1, merge=True)
+    sf = ak.flatten(ak.concatenate([ak.mask(sf_medium_pT, Sel_Muon.pt <= 120), ak.mask(sf_high_pT, Sel_Muon.pt > 120)], axis=1))
 
-    # sanity check
-    if ak.any(ak.num(sf) != 1):
-        raise 'error in mu sf computation'
-
-    return ak.flatten(sf)
+    return sf[~ak.is_none(sf)]
 
 def get_trigger_correction_mu(Sel_Muon):
+    Sel_Muon = ak.unflatten(Sel_Muon, counts= 1)
+
     # correction for Isomu24 trigger
 
     # for muon with 25<pt<120 GeV
     fTrigger_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/muon/Efficiencies_muon_generalTracks_Z_Run2018_UL_SingleMuonTriggers.root' 
     # file from https://gitlab.cern.ch/cms-muonPOG/muonefficiencies/-/blob/master/Run2/UL/2018/2018_trigger/Efficiencies_muon_generalTracks_Z_Run2018_UL_SingleMuonTriggers_schemaV2.json
     evaluator_Trigger = get_scales_fromjson(fTrigger_path)
-    Trigger_efficiency_corr_medium_pT = evaluator_Trigger["NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium_eta_pt"](Sel_Muon.eta[Sel_Muon.pt <= 120], Sel_Muon.pt[Sel_Muon.pt <= 120])
+    #Trigger_efficiency_corr_medium_pT = evaluator_Trigger["NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium_eta_pt"](Sel_Muon.eta[Sel_Muon.pt <= 120], Sel_Muon.pt[Sel_Muon.pt <= 120])
+    Trigger_efficiency_corr_medium_pT = evaluator_Trigger["NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium_eta_pt"](ak.mask(Sel_Muon, Sel_Muon.pt <= 120).eta, ak.mask(Sel_Muon, Sel_Muon.pt <= 120).pt) 
 
     # for muon with pt>120 GeV
     fTrigger_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/muon/Highpt_muon_trigger_eff.json' 
     # https://gitlab.cern.ch/cms-muonPOG/muonefficiencies/-/blob/master/Run2/UL/2018/2018_trigger/Efficiencies_muon_generalTracks_Z_Run2018_UL_SingleMuonTriggers_schemaV2.json
     evaluator_Trigger = get_scales_fromjson(fTrigger_path)
-    Trigger_efficiency_corr_high_pT = evaluator_Trigger["NUM_HighPtMuons/abseta_p_value"](Sel_Muon.eta[Sel_Muon.pt > 120], Sel_Muon.pt[Sel_Muon.pt > 120])
+    #Trigger_efficiency_corr_high_pT = evaluator_Trigger["NUM_HighPtMuons/abseta_p_value"](Sel_Muon.eta[Sel_Muon.pt > 120], Sel_Muon.pt[Sel_Muon.pt > 120])
+    Trigger_efficiency_corr_high_pT = evaluator_Trigger["NUM_HighPtMuons/abseta_p_value"](ak.mask(Sel_Muon, Sel_Muon.pt > 120).eta, ak.mask(Sel_Muon, Sel_Muon.pt > 120).pt)
 
-    Trigger_efficiency_corr = ak.concatenate([Trigger_efficiency_corr_medium_pT, Trigger_efficiency_corr_high_pT], axis=1)
+    Trigger_efficiency_corr = ak.flatten(ak.concatenate([Trigger_efficiency_corr_medium_pT, Trigger_efficiency_corr_high_pT], axis=1))
 
-    return ak.flatten(Trigger_efficiency_corr)
+    return Trigger_efficiency_corr[~ak.is_none(Trigger_efficiency_corr)]
 
 def compute_sf_e(Sel_Electron):
     # sf for electron following https://twiki.cern.ch/twiki/bin/view/CMS/EgammaUL2016To2018#SFs_for_Electrons_UL_2018
@@ -56,7 +56,7 @@ def compute_sf_e(Sel_Electron):
     #sf = ak.from_numpy(RECO_corr_e*ID_corr_e*MVA_corr_e)
     sf = ak.from_numpy(RECO_corr_e*MVA_corr_e)
 
-    return ak.flatten(sf)
+    return sf
 
 def get_trigger_correction_e(Sel_Electron):
     # sf for e trigger  from previous analysis: https://twiki.cern.ch/twiki/bin/viewauth/CMS/EgHLTScaleFactorMeasurements
@@ -64,7 +64,7 @@ def get_trigger_correction_e(Sel_Electron):
     evaluator_Trigger = get_scales_fromjson(fTrigger_path)
     Trigger_efficiency_corr = evaluator_Trigger["EGamma_SF2D"](Sel_Electron.eta, Sel_Electron.pt)
 
-    return ak.flatten(Trigger_efficiency_corr)
+    return Trigger_efficiency_corr
 
 def compute_sf_tau(Sel_Tau):
     # sf for tau with DeepTau2017v2p1 following https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
@@ -81,14 +81,14 @@ def compute_sf_tau_e(Sel_Tau):
     NRJscale_corr = get_correction_tau("tau_energy_scale",'nom', Sel_Tau)
     sf = ak.from_numpy(NRJscale_corr)
 
-    return ak.flatten(sf)
+    return sf
 
 def get_trigger_correction_tau(Sel_Tau):
     # sf for tau trigger following https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2
     trigger_corr = get_correction_tau("tau_trigger",'nom', Sel_Tau)
     sf = ak.from_numpy(trigger_corr)
 
-    return ak.flatten(sf)
+    return sf
 
 def get_scales_fromjson(json_file):
     ext = extractor()
