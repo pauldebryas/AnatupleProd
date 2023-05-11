@@ -821,3 +821,8 @@ HNL_tau_M-1000:
   crossSec: 4.387e-08
   reference: XSDB HeavyNeutrino_trilepton_M-1000_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8
   unc: 1.136e-10
+
+#normalise all signal samples to 1pb (convert limit in pb into limit in V2 at the signal extraction stage)
+HNL_tau_normalised:
+  crossSec: 1.
+  unc: 1.

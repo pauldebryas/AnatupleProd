@@ -5,6 +5,8 @@ import awkward as ak
 import json
 import uproot
 import pickle
+import yaml
+import correctionlib
 
 def import_stitching_weights(sample):
     ''' Import stitching weights for DY and WJets.
@@ -69,20 +71,20 @@ def reweight_WJets(events, stitching_weights_WJets):
 
     return events
 
-def data_goodrun_lumi(ds):
+def data_goodrun_lumi(ds, era = '2018'):
     ''' For a given data sample, extract the good runs (golden lumi json from LUMI POG stored in run2018_lumi.csv file) 
         and the corresponding luminosity stored in run_Data/ folder
 
         return a 2D array with the good runs and their corresponding luminosity
     '''
-    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/run2018_lumi.csv', newline='') as csvfile:
+    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/run{era}_lumi.csv', newline='') as csvfile:
         csv_reader = csv.reader(filter(lambda row: row[0]!='#', csvfile))
-        run2018_goodrun = list(csv_reader)
+        run_goodrun = list(csv_reader)
 
     #store only information that we need: run number and luminosity
     run2018_run_lumi = []
-    for i in range(len(run2018_goodrun)):
-        run2018_run_lumi.append([run2018_goodrun[i][0][0:6],run2018_goodrun[i][5]])
+    for i in range(len(run_goodrun)):
+        run2018_run_lumi.append([run_goodrun[i][0][0:6],run_goodrun[i][5]])
     run2018_run_lumi = np.array(run2018_run_lumi).astype(float)
 
     #then found the run in the data file (stored in run_Data_ds.csv file)
@@ -105,10 +107,10 @@ def data_goodrun_lumi(ds):
 
     return run_lumi
 
-def compute_lumi(ds):
+def compute_lumi(ds, era = '2018'):
     ''' compute exact luminosity in pb for a given data sample area (ex: SingleMuon_2018A)
     '''
-    run_lumi = data_goodrun_lumi(ds)
+    run_lumi = data_goodrun_lumi(ds, era)
     return np.sum(run_lumi[:,1])*1000 #convertion /fb --> /pb
 
 def compute_reweight(HLT, xsec, event_nb):
@@ -140,26 +142,32 @@ def apply_MET_Filter(events):
 def apply_reweight(ds, events, stitched_list, HLT, xsecs):
     ''' global weight for the sample (lumi x xsec / n_events) + apply stitching weights in case ds is DY or WJets samples
     '''
-    #Analysis task can be submited only if counter.pkl exist, which store initial nb of event
+    #Analysis task can be submited only if counter.pkl exist, which store initial nb of event in ds
     with open (f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/results/counter.pkl', 'rb') as f:
         event_counter = pickle.load(f)
 
-    event_nb = event_counter['sumw'][ds]
+    event_nb = event_counter['sumw_PUcorr'][ds]
+
+    xsec_file = os.path.join(os.getenv("ANALYSIS_PATH"), 'config', 'crossSections13TeV.yaml')
+    with open(xsec_file, 'r') as f:
+        xsec_load = yaml.safe_load(f)
+        xsec_DY_incl = xsec_load["DY_NNLO"]["crossSec"]
+        xsec_WJetsToLNu_incl = xsec_load["WJetsToLNu_LO"]["crossSec"]
 
     #applying stitching weights for DY and WJets samples
     if ds in stitched_list['DY_samples']:
         stitching_weights_DY = import_stitching_weights('DYtoLL')
         events = reweight_DY(events, stitching_weights_DY)
         # inclusive xsec and event event_nb for normalisation
-        xsecs = 6077.22
-        event_nb  = event_counter['sumw']['DYJetsToLL_M-50']
+        xsecs = xsec_DY_incl
+        event_nb  = event_counter['sumw_PUcorr']['DYJetsToLL_M-50']
         
     if ds in stitched_list['WJets_samples']:
         stitching_weights_WJets = import_stitching_weights('WJetsToLNu')
         events = reweight_WJets(events, stitching_weights_WJets)
         # inclusive xsec and event event_nb for normalisation
-        xsecs = 53870.0
-        event_nb = event_counter['sumw']['WJetsToLNu']
+        xsecs = xsec_WJetsToLNu_incl
+        event_nb = event_counter['sumw_PUcorr']['WJetsToLNu']
 
     #reweights events with lumi x xsec / n_events
     scale = compute_reweight(HLT, xsecs, event_nb)
@@ -194,9 +202,14 @@ def delta_r(v1, v2):
     return np.sqrt(delta_r2(v1, v2))
 
 def bjet_candidates(events, Lepton1, Lepton2, Lepton3, delta_r_cut = 0.5):
-    ''' Return bjet (btagDeepFlavB > 0.0490) with pt > 20, eta < 2.5, jetId >= 4 which do no not match selected lepton
+    ''' Return bjet (btagDeepFlavB > LooseWP) with pt > 20, eta < 2.5, jetId >= 4 which do no not match selected lepton
     '''
-    bjets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.jetId >= 4) & (events.Jet.btagDeepFlavB > 0.0490)]
+    # btag wp
+    cset = correctionlib.CorrectionSet.from_file("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2018_UL/btagging.json.gz")
+    #loose WP value
+    deepJet_wp_value = cset["deepJet_wp_values"].evaluate("L")
+
+    bjets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.jetId >= 4) & (events.Jet.btagDeepFlavB > deepJet_wp_value)]
     drcut_jetslep1 = delta_r(Lepton1,bjets_candidates) > delta_r_cut
     drcut_jetslep2 = delta_r(Lepton2,bjets_candidates) > delta_r_cut
     drcut_jetslep3 = delta_r(Lepton3,bjets_candidates) > delta_r_cut
@@ -220,7 +233,7 @@ def bjet_info(events):
 def save_Event_bjets(save_file, lst, events):
     ''' Save in a root file all informations in given list in "Event" Tree + bjets info in "bjets" Tree
     '''
-    with uproot.create(save_file, compression=None) as file:
+    with uproot.create(save_file, compression=uproot.ZLIB(4)) as file:
         file["Event"] = lst
         if np.sum(ak.num(bjet_info(events))) != 0:
             file["bjets"] = bjet_info(events)
@@ -292,6 +305,11 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
     lst = save_anatuple_lepton(Sel_Tau, lst, exclude_list, name)
 
     if mode != 'Data':
+        # save tau energy corr
+        lst[f"{name}_ptcorr"] = np.array(Sel_Tau['ptcorr'])
+        lst[f"{name}_masscorr"] = np.array(Sel_Tau['masscorr'])
+
+        #save matching Jet info
         Tau_Jet = matching_jet(events, Sel_Tau)
         Tau_GenJet = matching_Genjet(events, Sel_Tau)
 
@@ -307,15 +325,6 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
         
     return lst
 
-def matching_IsoMu24(events, Sel_Muon, min_dr_cut = 0.2):
-    ''' Return boolean mask if selected Muon match IsoMu24 HLT
-        Trigger object is a muon (id == 13) with pt > 24 (HLT marge) with  TrigObj_filterBits for Muon: 2 = Iso and 8 = 1mu
-        return mask which is true if at least 1 TrigObj within DeltaR(TrigObj,Sel_Muon)<min_dr_cut
-    '''
-    Trigger_Muon = events.TrigObj[ (abs(events.TrigObj.id) == 13)  & (events.TrigObj.pt > 24.) & ((events.TrigObj.filterBits & (2+8)) != 0)]
-    cut_dr_mask = delta_r(Sel_Muon, Trigger_Muon) < min_dr_cut # remove too high dr matching
-    return ak.num(cut_dr_mask) >= 1
-    
 def IsoMuon_mask(events, n, iso_cut = 0.15):
     ''' Return mask to veto events with more than n muon with pfRelIso03_all <= iso_cut
     '''
@@ -327,26 +336,7 @@ def IsoElectron_mask(events, n, iso_cut = 0.15):
     '''
     Iso_electron = events.SelElectron[events.SelElectron.pfRelIso03_all <= iso_cut]
     return ak.num(Iso_electron) <= n
-    
-def Trigger_Muon_sel(events):
-    ''' Select Trigger muon for IsoMu24 HLT
-        Require min pt/eta for trigger obj matching for at leat 1 muon. 
-        According to the central muon SFs recommendations it should be online pt + 2 GeV and |eta| < 2.1
-        We take the one with minimum pfRelIso03_all in case of ambiguity
-    '''
-    Trigger_Muon_candidates = events.SelMuon[(events.SelMuon.pt > 26.) & (np.abs(events.SelMuon.eta) < 2.1)]
 
-    #make sure at least 1 muon satisfy this condition
-    cut_mask = ak.num(Trigger_Muon_candidates) >= 1
-    events = events[cut_mask]
-    Trigger_Muon_candidates = Trigger_Muon_candidates[cut_mask]
-
-    #first muons selected with minimum pfRelIso03_all. In case same isolation, we take the first one by default
-    Sel_Muon = Trigger_Muon_candidates[ak.min(Trigger_Muon_candidates.pfRelIso03_all, axis=-1) == Trigger_Muon_candidates.pfRelIso03_all]
-    Sel_Muon = Sel_Muon[:,0]
-
-    return events, Sel_Muon
-    
 def FinalTau_sel(events, Sel_Lepton1, Sel_Lepton2, delta_r_cut = 0.5):
     ''' Select Tau candidate with dr(Sel_Lepton1,Tau)>0.5 and dr(Sel_Lepton2,Tau)>0.5 
         We take the one with maximum rawDeepTau2018v2p5VSjet in case of ambiguity
@@ -365,3 +355,83 @@ def FinalTau_sel(events, Sel_Lepton1, Sel_Lepton2, delta_r_cut = 0.5):
     Sel_Tau = Sel_Tau[:,0]
 
     return events, Sel_Lepton1, Sel_Lepton2, Sel_Tau
+
+def matching_IsoMu24(events, Sel_Muon, min_dr_cut = 0.2):
+    ''' Return Muon among Sel_Muon collection that match Trigger object (IsoMu24 HLT) and within DeltaR(TrigObj,Sel_Muon)<min_dr_cut 
+        Trigger object is a muon (id == 13) with pt > 24 (HLT marge) with  TrigObj_filterBits for Muon: 2 = Iso and 8 = 1mu
+    '''
+    Trigger_Muon = events.TrigObj[ (abs(events.TrigObj.id) == 13)  & (events.TrigObj.pt > 24.) & ((events.TrigObj.filterBits & (2+8)) != 0)]
+    trigger_muon, sel_Muon = ak.unzip(ak.cartesian([Trigger_Muon, Sel_Muon], nested=True))
+
+    Sel_Muon = sel_Muon[ak.argmin(delta_r(trigger_muon, sel_Muon), axis=-1, keepdims = True , mask_identity = True)] # Select for each pair (trigger/reco_mu) the reco_mu that match the best with trigger_mu
+    Sel_trigger = trigger_muon[ak.argmin(delta_r(trigger_muon, sel_Muon), axis=-1, keepdims = True , mask_identity = True)] # Select for each pair (trigger/reco_mu) the trigger_mu that match the best with reco_mu
+    Sel_Muon = Sel_Muon[delta_r(Sel_trigger, Sel_Muon) < min_dr_cut]
+    Sel_Muon = ak.flatten(Sel_Muon, axis=-1)
+
+    return Sel_Muon
+
+def Trigger_Muon_sel(events):
+    ''' Select Trigger muon for IsoMu24 HLT
+        Require min pt/eta for trigger obj matching for at leat 1 muon. 
+        According to the central muon SFs recommendations it should be online pt + 2 GeV and |eta| < 2.1
+        Select one Muon that match trigger object
+        We take the one with minimum pfRelIso03_all in case of ambiguity
+    '''
+    Trigger_Muon_candidates = events.SelMuon[(events.SelMuon.pt > 26.) & (np.abs(events.SelMuon.eta) < 2.1)]
+
+    #make sure at least 1 muon satisfy this condition
+    cut_mask = ak.num(Trigger_Muon_candidates) >= 1
+    events = events[cut_mask]
+    Trigger_Muon_candidates = Trigger_Muon_candidates[cut_mask]
+
+    #select the one that match trigger 
+    Trigger_Muon_candidates = matching_IsoMu24(events, Trigger_Muon_candidates)
+    cut_mask = ak.num(Trigger_Muon_candidates) >= 1
+    events = events[cut_mask]
+    Trigger_Muon_candidates = Trigger_Muon_candidates[cut_mask]
+
+    #first muons selected with minimum pfRelIso03_all. In case same isolation, we take the first one by default
+    Sel_Muon = Trigger_Muon_candidates[ak.min(Trigger_Muon_candidates.pfRelIso03_all, axis=-1) == Trigger_Muon_candidates.pfRelIso03_all]
+    Sel_Muon = Sel_Muon[:,0]
+
+    return events, Sel_Muon
+
+def matching_Ele32(events, Sel_Electron, min_dr_cut = 0.2):
+    ''' Return Electron among Sel_Electron collection that match Trigger object (Ele32 HLT) and within DeltaR(TrigObj,Sel_Electron)<min_dr_cut
+        Trigger object is a electron (id == 11) with TrigObj_filterBits 2= 1e WPTight
+    '''
+    Trigger_Electron = events.TrigObj[ (abs(events.TrigObj.id) == 11) & ((events.TrigObj.filterBits & (2)) != 0)]  
+    trigger_electron, sel_electron = ak.unzip(ak.cartesian([Trigger_Electron, Sel_Electron], nested=True))
+
+    Sel_Electron = sel_electron[ak.argmin(delta_r(trigger_electron, sel_electron), axis=-1, keepdims = True , mask_identity = True)] # Select for each pair (trigger/reco_e) the reco_e that match the best with trigger_e
+    Sel_trigger = trigger_electron[ak.argmin(delta_r(trigger_electron, sel_electron), axis=-1, keepdims = True , mask_identity = True)] 
+    Sel_Electron = Sel_Electron[delta_r(Sel_trigger, Sel_Electron) < min_dr_cut]
+    Sel_Electron = ak.flatten(Sel_Electron, axis=-1)
+    
+    return Sel_Electron
+
+def Ele32_Electron_sel(events):
+    ''' Select Trigger electron for Ele32 HLT
+        Require min pt/eta for trigger obj matching for at leat 1 electron. 
+        According to the central electron SFs recommendations it should be online pt + 2 GeV 
+        Select one Electron that match trigger object
+        We take the one with minimum pfRelIso03_all in case of ambiguity
+    '''
+    Trigger_Electron_candidates = events.SelElectron[(events.SelElectron.pt > 34.)]
+
+    #make sure at least 1 muon satisfy this condition
+    cut_mask = ak.num(Trigger_Electron_candidates) >= 1
+    events = events[cut_mask]
+    Trigger_Electron_candidates = Trigger_Electron_candidates[cut_mask]
+
+    #select the one that match trigger 
+    Trigger_Electron_candidates = matching_Ele32(events, Trigger_Electron_candidates)
+    cut_mask = ak.num(Trigger_Electron_candidates) >= 1
+    events = events[cut_mask]
+    Trigger_Electron_candidates = Trigger_Electron_candidates[cut_mask]
+
+    #first electron selected with minimum pfRelIso03_all. In case same isolation, we take the first one by default
+    Sel_Electron = Trigger_Electron_candidates[ak.min(Trigger_Electron_candidates.pfRelIso03_all, axis=-1) == Trigger_Electron_candidates.pfRelIso03_all]
+    Sel_Electron = Sel_Electron[:,0]
+
+    return events, Sel_Electron

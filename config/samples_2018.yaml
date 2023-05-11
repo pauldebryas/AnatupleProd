@@ -187,112 +187,128 @@ HNL_tau_M-85:
   sampleType: HNL_tau
   mass: 85
   Vtau: 0.01
-  crossSection: HNL_tau_M-85
+  #crossSection: HNL_tau_M-85
+  crossSection: HNL_tau_normalised
 HNL_tau_M-100:
   nanoAOD: /HeavyNeutrino_trilepton_M-100_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-100_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 100
   Vtau: 0.01
-  crossSection: HNL_tau_M-100
+  #crossSection: HNL_tau_M-100
+  crossSection: HNL_tau_normalised
 HNL_tau_M-125:
   nanoAOD: /HeavyNeutrino_trilepton_M-125_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-125_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 125
   Vtau: 0.01
-  crossSection: HNL_tau_M-125
+  #crossSection: HNL_tau_M-125
+  crossSection: HNL_tau_normalised
 HNL_tau_M-150:
   nanoAOD: /HeavyNeutrino_trilepton_M-150_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-150_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 150
   Vtau: 0.01
-  crossSection: HNL_tau_M-150
+  #crossSection: HNL_tau_M-150
+  crossSection: HNL_tau_normalised
 HNL_tau_M-200:
   nanoAOD: /HeavyNeutrino_trilepton_M-200_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-200_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 200
   Vtau: 0.01
-  crossSection: HNL_tau_M-200
+  #crossSection: HNL_tau_M-200
+  crossSection: HNL_tau_normalised
 HNL_tau_M-250:
   nanoAOD: /HeavyNeutrino_trilepton_M-250_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-250_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 250
   Vtau: 0.01
-  crossSection: HNL_tau_M-250
+  #crossSection: HNL_tau_M-250
+  crossSection: HNL_tau_normalised
 HNL_tau_M-300:
   nanoAOD: /HeavyNeutrino_trilepton_M-300_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-300_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 300
   Vtau: 0.01
-  crossSection: HNL_tau_M-300
+  #crossSection: HNL_tau_M-300
+  crossSection: HNL_tau_normalised
 HNL_tau_M-350:
   nanoAOD: /HeavyNeutrino_trilepton_M-350_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-350_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 350
   Vtau: 0.01
-  crossSection: HNL_tau_M-350
+  #crossSection: HNL_tau_M-350
+  crossSection: HNL_tau_normalised
 HNL_tau_M-400:
   nanoAOD: /HeavyNeutrino_trilepton_M-400_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-400_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 400
   Vtau: 0.01
-  crossSection: HNL_tau_M-400
+  #crossSection: HNL_tau_M-400
+  crossSection: HNL_tau_normalised
 HNL_tau_M-450:
   nanoAOD: /HeavyNeutrino_trilepton_M-450_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-450_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 450
   Vtau: 0.01
-  crossSection: HNL_tau_M-450
+  #crossSection: HNL_tau_M-450
+  crossSection: HNL_tau_normalised
 HNL_tau_M-500:
   nanoAOD: /HeavyNeutrino_trilepton_M-500_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-500_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 500
   Vtau: 0.01
-  crossSection: HNL_tau_M-500
+  #crossSection: HNL_tau_M-500
+  crossSection: HNL_tau_normalised
 HNL_tau_M-600:
   nanoAOD: /HeavyNeutrino_trilepton_M-600_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-600_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 600
   Vtau: 0.01
-  crossSection: HNL_tau_M-600
+  #crossSection: HNL_tau_M-600
+  crossSection: HNL_tau_normalised
 HNL_tau_M-700:
   nanoAOD: /HeavyNeutrino_trilepton_M-700_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-700_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 700
   Vtau: 0.01
-  crossSection: HNL_tau_M-700
+  #crossSection: HNL_tau_M-700
+  crossSection: HNL_tau_normalised
 HNL_tau_M-800:
   nanoAOD: /HeavyNeutrino_trilepton_M-800_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-800_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 800
   Vtau: 0.01
-  crossSection: HNL_tau_M-800
+  #crossSection: HNL_tau_M-800
+  crossSection: HNL_tau_normalised
 HNL_tau_M-900:
   nanoAOD: /HeavyNeutrino_trilepton_M-900_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-900_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 900
   Vtau: 0.01
-  crossSection: HNL_tau_M-900
+  #crossSection: HNL_tau_M-900
+  crossSection: HNL_tau_normalised
 HNL_tau_M-1000:
   nanoAOD: /HeavyNeutrino_trilepton_M-1000_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   miniAOD: /HeavyNeutrino_trilepton_M-1000_V-0p01_tau_NLO_tauhFilter_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM
   sampleType: HNL_tau
   mass: 1000
   Vtau: 0.01
-  crossSection: HNL_tau_M-1000
+  #crossSection: HNL_tau_M-1000
+  crossSection: HNL_tau_normalised
 
 
 #

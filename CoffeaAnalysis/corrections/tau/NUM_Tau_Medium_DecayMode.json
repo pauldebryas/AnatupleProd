@@ -1,0 +1,18 @@
+{
+    "DeepTau2017v2p5": {
+        "DecayMode": {
+            "DecayMode:0": {
+                "value": 0.8861654
+            },
+            "DecayMode:1": {
+                "value": 0.9226725
+            },
+            "DecayMode:10": {
+                "value": 0.9329327
+            },
+            "DecayMode:11": {
+                "value": 0.7653489
+            }
+        }
+    }
+}

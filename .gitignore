@@ -6,3 +6,4 @@ __init__.py
 /config/test_samples.yaml
 *.html
 /CoffeaAnalysis/results/*
+/CoffeaAnalysis/oldfiles

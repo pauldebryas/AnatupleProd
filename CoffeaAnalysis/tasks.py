@@ -10,7 +10,7 @@ from coffea import processor
 from coffea.nanoevents import NanoAODSchema
 NanoAODSchema.warn_missing_crossrefs = True
 
-from CoffeaAnalysis.HNLAnalysis.CountEvents import CountEvents, CountEvents_stitched_samples
+from CoffeaAnalysis.HNLAnalysis.CountEvents import CountEvents
 from CoffeaAnalysis.task_helpers import files_from_path, cleanup_ds
 from run_tools.law_customizations import Task, HTCondorWorkflow
 
@@ -98,7 +98,8 @@ class RunCounter(BaseTaskAnalysis, HTCondorWorkflow, law.LocalWorkflow):
                     continue
                 path_to_sample = os.path.join(os.path.join(self.central_path(), self.version, 'Run2_2018', sample_name))
                 if os.path.exists(path_to_sample):
-                    samples_list[sample_name] = files_from_path(path_to_sample)
+                    if sampleType != 'data':
+                        samples_list[sample_name] = files_from_path(path_to_sample)
                 else:
                     self.publish_message("Missing sample path for sample: {}".format(path_to_sample))
                     raise RuntimeError("Non existing sample path has been detected.")
@@ -111,36 +112,29 @@ class RunCounter(BaseTaskAnalysis, HTCondorWorkflow, law.LocalWorkflow):
         WJets_samples= stitched_list['WJets_samples']
         Backgrounds_stitched = Drell_Yann_samples + WJets_samples
 
-        samples_stitched = {}
-        for element in Backgrounds_stitched:
-            samples_stitched[element] = samples_list[element]
-
         event_counter_NotSelected = processor.run_uproot_job(
-            samples_stitched,
+            samples_list,
             'EventsNotSelected',
-            CountEvents_stitched_samples(),
+            CountEvents(Backgrounds_stitched),
             processor.iterative_executor,
             {"schema": NanoAODSchema, 'workers': 6},
         )
 
         event_counter_Selected = processor.run_uproot_job(
-            samples_stitched,
-            'Events',
-            CountEvents_stitched_samples(),
-            processor.iterative_executor,
-            {"schema": NanoAODSchema, 'workers': 6},
-        )
-
-        event_counter = processor.run_uproot_job(
             samples_list,
-            'Runs',
-            CountEvents(),
+            'Events',
+            CountEvents(Backgrounds_stitched),
             processor.iterative_executor,
             {"schema": NanoAODSchema, 'workers': 6},
         )
 
-        for sample in list(samples_stitched):
-            event_counter['sumw'][sample] = event_counter_NotSelected['sumw_fixed'][sample] + event_counter_Selected['sumw_fixed'][sample]
+        event_counter = {}
+        event_counter['sumw'] = {}
+        event_counter['sumw_PUcorr'] = {}
+
+        for sample in list(samples_list):
+            event_counter['sumw'][sample] = event_counter_NotSelected['sumw'][sample] + event_counter_Selected['sumw'][sample]
+            event_counter['sumw_PUcorr'][sample] = event_counter_NotSelected['sumw_PUcorr'][sample] + event_counter_Selected['sumw_PUcorr'][sample]
 
         self.output().dump(event_counter)
 
@@ -202,7 +196,7 @@ class Analysis(BaseTaskAnalysis, HTCondorWorkflow, law.LocalWorkflow):
             for sample in sample_name:
                 samples_list[sample] = files[i]
                 i = i+1
-            sample_name = f'{sample[0:-1]}_{period}'
+            sample_name = f'{sample[0:-1]}'
 
         output_root_folder = os.path.join(self.ana_path(), 'CoffeaAnalysis', 'results', tag, 'anatuple')
         if not os.path.exists(output_root_folder):
