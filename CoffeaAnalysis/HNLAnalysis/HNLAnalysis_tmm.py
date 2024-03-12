@@ -2,14 +2,14 @@ import numpy as np
 import awkward as ak
 from coffea import processor
 
-from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_Event_bjets
-from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_mu, compute_sf_tau, get_trigger_correction_mu
+from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
+from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_mu, compute_sf_tau, get_trigger_correction_mu, compute_sf_L1PreFiring, get_pileup_correction
 from CoffeaAnalysis.HNLAnalysis.helpers import IsoMuon_mask, Trigger_Muon_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs):
-        HNLProcessor.__init__(self, stitched_list, tag, xsecs)
+    def __init__(self, stitched_list, tag, xsecs, periods):
+        HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods)
         acc_dict = {}
         self.selections = self.get_selections()
         for selection in self.selections:
@@ -17,8 +17,8 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
             acc_dict[f'sumw_{selection}'] = processor.defaultdict_accumulator(float)
         self._accumulator = processor.dict_accumulator(acc_dict)
 
-        #the corresponding data sample for tmm channel (HLT=IsoMu24)
-        self.dataHLT = 'SingleMuon_2018'
+        #the corresponding data sample for tmm channel (HLT=IsoMu24) 
+        self.dataHLT = 'SingleMuon'
 
     @property
     def accumulator(self):
@@ -43,30 +43,72 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
     def process(self, events):
 
         out = self.accumulator.identity()
-        events, out, ds, mode = self.init_process(out, events)
-        
+        events, out = self.init_process(out, events)
+
         # cut specific for that channel
-        self.cut_e_iso = 0.15 # veto events with tight e isolation for ortogonality in signal region for channels with electrons
+        self.cut_e_iso = 0.15 # veto events with tight e isolation for ortogonality in signal region for channels with electrons 
 
-        events = self.Lepton_selection(events, mode)
+        # Do the general lepton selection
+        events_tmm = self.Lepton_selection(events)
 
-        self.analyse_tmm(events, out, ds, mode)
+        # Apply the cuts and select leptons
+        events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_tmm, out)
+
+        # Save anatuple
+        save_file, lst = self.save_anatuple_tmm(events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau, self.tag, save_weightcorr=True)
+        save_Event(save_file, lst, 'Events')
+        if self.mode != 'Data':
+            save_bjets(save_file, events_tmm) #for bTagSF
+
+        if self.mode != 'Data':
+            Tau_ES_corr_list = ['DM0', 'DM1', '3prong']
+            # Compute Tau_ES for genuineTau
+            for Tau_ES_corr in Tau_ES_corr_list:
+                for val_corr in ['up','down']:
+                    Treename = 'Events_GenuineTauES_'+Tau_ES_corr+'_'+val_corr
+                    print('TAU ES corrections: saving '+ Treename)
+                    events_corr = self.Lepton_selection(events, Treename)
+                    events_corr, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_corr)
+                    save_file, lst = self.save_anatuple_tmm(events_corr, Sel_Muon, Sel_Muon2, Sel_Tau, self.tag, save_weightcorr=False)
+                    save_Event(save_file, lst, Treename)
+
+            # Compute Tau_ES for genuineElectron
+            for Tau_ES_corr in Tau_ES_corr_list:
+                for val_corr in ['up','down']:
+                    Treename = 'Events_GenuineElectronES_'+Tau_ES_corr+'_'+val_corr
+                    print('TAU ES corrections: saving '+ Treename)
+                    events_corr = self.Lepton_selection(events, Treename)
+                    events_corr, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_corr)
+                    save_file, lst = self.save_anatuple_tmm(events_corr, Sel_Muon, Sel_Muon2, Sel_Tau, self.tag, save_weightcorr=False)
+                    save_Event(save_file, lst, Treename)
+
+            # Compute Tau_ES for genuineMuon
+            for val_corr in ['up','down']:
+                Treename = 'Events_GenuineMuonES_'+val_corr
+                print('TAU ES corrections: saving '+ Treename)
+                events_corr = self.Lepton_selection(events, Treename)
+                events_corr, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_corr)
+                save_file, lst = self.save_anatuple_tmm(events_corr, Sel_Muon, Sel_Muon2, Sel_Tau, self.tag, save_weightcorr=False)
+                save_Event(save_file, lst, Treename)
 
         return out
 
-    def analyse_tmm(self, events, out, ds, mode):
+    def analyse_tmm(self, events, out= None):
+        # If out is None, do note save the cutflow
 
         # select tmm events: require at least 2 reco mu and 1 reco tau 
         events_tmm = events[(ak.num(events.SelMuon) >= 2) & (ak.num(events.SelTau) >= 1)]
 
-        out[f'sumw_AtLeast1tau2mu'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_AtLeast1tau2mu'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_AtLeast1tau2mu'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_AtLeast1tau2mu'][self.ds] += len(events_tmm)
 
         # veto events with more than two muon with pfRelIso03_all <= 0.15
         events_tmm = events_tmm[IsoMuon_mask(events_tmm, 2, iso_cut=0.15)]
 
-        out[f'sumw_NoAdditionalIsoMuon'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_NoAdditionalIsoMuon'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_NoAdditionalIsoMuon'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_NoAdditionalIsoMuon'][self.ds] += len(events_tmm)
 
         # save info if an extra muon exist with 0.15 <pfRelIso03_all < 0.4
         events_tmm['nAdditionalMuon'] = ak.num(events_tmm.SelMuon[events_tmm.SelMuon.pfRelIso03_all > 0.15])
@@ -74,19 +116,28 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
         # remove events with more than one isolated electron (assure orthogonality with tte tee tem)
         events_tmm = events_tmm[ak.num(events_tmm.SelElectron) == 0]
 
-        out[f'sumw_NoIsoElectron'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_NoIsoElectron'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_NoIsoElectron'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_NoIsoElectron'][self.ds] += len(events_tmm)
 
-        # events should pass most efficient HLT (for now only 1: IsoMu24)
-        events_tmm = events_tmm[events_tmm.HLT.IsoMu24]
+        # events should pass most efficient HLT (for now only 1: IsoMu)
+        if self.period == '2018':
+            events_tmm = events_tmm[events_tmm.HLT.IsoMu24]
+        if self.period == '2017':
+            events_tmm = events_tmm[events_tmm.HLT.IsoMu27]
+        if self.period == '2016':
+            events_tmm = events_tmm[events_tmm.HLT.IsoMu24]
 
-        out[f'sumw_HLT'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_HLT'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_HLT'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_HLT'][self.ds] += len(events_tmm)
 
-        events_tmm, Sel_Muon = Trigger_Muon_sel(events_tmm)
+         # Select trigger Muon
+        events_tmm, Sel_Muon = Trigger_Muon_sel(events_tmm, self.period)
 
-        out[f'sumw_MuTriggerMatching'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_MuTriggerMatching'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_MuTriggerMatching'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_MuTriggerMatching'][self.ds] += len(events_tmm)
 
         delta_r_cut = 0.5
 
@@ -102,62 +153,69 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
         Sel_Muon2 = Mu2_candidate[ak.min(Mu2_candidate.pfRelIso03_all, axis=-1) == Mu2_candidate.pfRelIso03_all]
         Sel_Muon2 = Sel_Muon2[:,0]
 
-        out[f'sumw_drMu1Mu2'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_drMu1Mu2'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_drMu1Mu2'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_drMu1Mu2'][self.ds] += len(events_tmm)
 
         # select Tau candidate with dr(muon,Tau)>0.5 and dr(muon2,Tau)>0.5  and highest isolation VSJet
-        events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau = FinalTau_sel(events_tmm, Sel_Muon, Sel_Muon2)
+        events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau = FinalTau_sel(events_tmm, Sel_Muon, Sel_Muon2, self.DeepTauVersion)
 
-        out[f'sumw_drTauMuons'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_drTauMuons'][ds] += len(events_tmm)
+        if out != None:
+            out[f'sumw_drTauMuons'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_drTauMuons'][self.ds] += len(events_tmm)
 
-        bjet_candidate = bjet_candidates(events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau)
-
-        events_tmm['nbjets'] = ak.num(bjet_candidate)
-        events_tmm['bjets'] = bjet_candidate
+        # Save bjets candidates
+        bjet_candidates(events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau, self.period)
 
         if len(events_tmm) == 0:
             print('0 events pass selection')
             return
- 
-        #computing sf corrections
-        if mode != 'Data':
-            sf_tau = compute_sf_tau(Sel_Tau)
-            sf_mu1 = compute_sf_mu(Sel_Muon)
-            sf_mu2 = compute_sf_mu(Sel_Muon2)
-            Trigger_eff_corr_mu = get_trigger_correction_mu(Sel_Muon) # apply Trigger sf to the Muon that match HLT
-            events_tmm.genWeight = events_tmm.genWeight * sf_tau * sf_mu1 * sf_mu2 * Trigger_eff_corr_mu 
 
-        out[f'sumw_corrections'][ds] += ak.sum(events_tmm.genWeight)
-        out[f'n_ev_corrections'][ds] += len(events_tmm)
+        # Apply corrections for MC
+        if self.mode != 'Data':
+            events_tmm = self.compute_corrections_tmm(events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau)
 
-        # Save anatuple
-        self.save_anatuple_tmm(ds, events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau, self.tag, mode)
+        if out != None:
+            out[f'sumw_corrections'][self.ds] += ak.sum(events_tmm.genWeight)
+            out[f'n_ev_corrections'][self.ds] += len(events_tmm)
+        
+        return events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau
 
-        return events_tmm
+    def compute_corrections_tmm(self, events, Sel_Muon, Sel_Muon2, Sel_Tau):
+        #computing sf corrections        
+        sf_tau = compute_sf_tau(Sel_Tau, events, 'Tau', self.period, self.DeepTauVersion)
+        sf_mu1 = compute_sf_mu(Sel_Muon, events, 'Muon1', self.period)
+        sf_mu2 = compute_sf_mu(Sel_Muon2, events, 'Muon2', self.period)
+        Trigger_eff_corr_mu = get_trigger_correction_mu(Sel_Muon, events, 'Muon1', self.period) # apply Trigger sf to the Muon that match HLT
+        Trigger_eff_corr_mu2 = get_trigger_correction_mu(Sel_Muon2, events, 'Muon2', self.period) # compute Trigger sf for Muon2
+        sf_L1PreFiring = compute_sf_L1PreFiring(events)
+        PU_corr, PU_corr_up, PU_corr_down = get_pileup_correction(events, self.period)
+        events.genWeight = events.genWeight * sf_tau * sf_mu1 * sf_mu2 * Trigger_eff_corr_mu * sf_L1PreFiring * PU_corr
+        return events
     
-    def save_anatuple_tmm(self, ds, events, Sel_Muon, Sel_Muon2, Sel_Tau, tag, mode):
+    def save_anatuple_tmm(self, events, Sel_Muon, Sel_Muon2, Sel_Tau, tag, save_weightcorr=True):
 
         exclude_list = ['genPartIdx']
         
-        save_file, lst = save_anatuple_common(ds, events, tag)
+        save_file, lst = save_anatuple_common(self.ds, events, tag, 'tmm', save_weightcorr)
 
         #info specific to the channel
         lst["nAdditionalMuon"] = np.array(events.nAdditionalMuon)
         lst['channelIndex'] = np.ones(len(events))*322
 
-        if mode == 'signal':
-            if 'HNL_tau_M-' not in ds:
-                raise 'signal samples not starting with HNL_tau_M-'
-            lst['HNLmass'] = np.ones(len(events))*int(ds[len('HNL_tau_M-'):])
+        if self.mode == 'signal':
+            lst['HNLmass'] = np.ones(len(events))*int(self.ds[self.ds.rfind("-") + 1:])
 
-        lst = save_anatuple_lepton(Sel_Muon, lst, exclude_list, 'Muon1')
-        lst = save_anatuple_lepton(Sel_Muon2, lst, exclude_list, 'Muon2')
-        lst = save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, 'Tau')
+        #order muon by pt
+        mask_ptmax = Sel_Muon.pt >= Sel_Muon2.pt
+        Sel_Muon_ptmax = ak.where(mask_ptmax, Sel_Muon, Sel_Muon2)
+        Sel_Muon_ptmin = ak.where(~mask_ptmax, Sel_Muon, Sel_Muon2)
 
-        save_Event_bjets(save_file, lst, events)
+        lst = save_anatuple_lepton(Sel_Muon_ptmax, lst, exclude_list, 'Muon1')
+        lst = save_anatuple_lepton(Sel_Muon_ptmin, lst, exclude_list, 'Muon2')
+        lst = save_anatuple_tau(events, Sel_Tau, lst, exclude_list, self.mode, 'Tau')
 
-        return
-    
+        return save_file, lst
+
     def postprocess(self, accumulator):
         return accumulator

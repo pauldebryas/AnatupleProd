@@ -4,16 +4,12 @@ import math
 import os
 import yaml
 
-
 law.contrib.load("htcondor")
 
 class Task(law.Task):
     """
-    Base task that we use to force a version parameter on all inheriting tasks, and that provides
-    some convenience methods to create local file and directory targets at the default data path.
+    Base task that which will be inherited by all the other tasks.
     """
-
-    version = luigi.Parameter()
     periods = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
@@ -22,7 +18,6 @@ class Task(law.Task):
 
     def load_sample_configs(self):
         self.samples = {}
-        self.global_sample_params = {}
         for period in self.all_periods:
             self.samples[period] = {}
             sample_config = os.path.join(self.ana_path(), 'config', f'samples_{period}.yaml')
@@ -31,10 +26,23 @@ class Task(law.Task):
             for key, value in samples.items():
                 if(type(value) != dict):
                     raise RuntimeError(f'Invalid sample definition period="{period}", sample_name="{key}"' )
-                if key == 'GLOBAL':
-                    self.global_sample_params[period] = value
                 else:
                     self.samples[period][key] = value
+
+    def load_global_params(self):
+        self.stitched_samples = {}
+        self.excluded_samples = {}
+        for period in self.all_periods:
+            self.stitched_samples[period] = {}
+            self.excluded_samples[period] = {}
+            sample_config = os.path.join(self.ana_path(), 'config', f'global_params_{period}.yaml')
+            with open(sample_config, 'r') as f:
+                samples = yaml.safe_load(f)
+            for key, value in samples.items():
+                if key == 'excluded_samples':
+                    self.excluded_samples[period] = value
+                if key == 'stitched_samples':
+                    self.stitched_samples[period] = value
 
     def load_xsecs(self):
         self.xsecs = {}
@@ -46,38 +54,47 @@ class Task(law.Task):
             self.xsecs[sample] = value['crossSec']
             self.xsecs_unc[sample] = value['unc']
                     
-    def store_parts(self):
-        return (self.__class__.__name__, self.version)
-
+    def output_anatuple(self):
+        output_anatuple_path = os.path.join(self.central_path_anatuple(),'anatuple' , self.periods)
+        os.makedirs(output_anatuple_path, exist_ok=True)
+        return output_anatuple_path
+    
     def ana_path(self):
         return os.getenv("ANALYSIS_PATH")
 
     def ana_data_path(self):
         return os.getenv("ANALYSIS_DATA_PATH")
 
-    def ana_big_data_path(self):
-        return os.getenv("ANALYSIS_BIG_DATA_PATH")
+    def central_path_anatuple(self):
+        return os.getenv("CENTRAL_STORAGE_ANATUPLE")
 
-    def central_path(self):
-        return os.getenv("CENTRAL_STORAGE")
-
-    def local_path(self, *path):
-        parts = (self.ana_data_path(),) + self.store_parts() + path
-        return os.path.join(*parts)
-
-    def local_central_path(self, *path):
-        parts = (self.ana_big_data_path(),) + self.store_parts() + path
-        return os.path.join(*parts)
-
-    def local_target(self, *path):
-        return law.LocalFileTarget(self.local_path(*path))
+    def central_path_nanoAOD(self):
+        return os.getenv("CENTRAL_STORAGE_NANOAOD")
 
     def local_analysis_path(self, *path):
-        parts = (self.ana_path(),) + self.store_parts() + path
+        parts = (self.ana_path(),) + path
+        return os.path.join(*parts)
+    
+    def local_data_path(self, *path):
+        parts = (self.ana_data_path(),) + path
         return os.path.join(*parts)
 
+    def local_central_path_anatuple(self, *path):
+        parts = (self.central_path_anatuple(),) + path
+        return os.path.join(*parts)
+
+    def local_central_path_nanoAOD(self, *path):
+        parts = (self.central_path_nanoAOD(),) + path
+        return os.path.join(*parts)
+    
     def local_analysis_target(self, *path):
         return law.LocalFileTarget(self.local_analysis_path(*path))
+        
+    def local_data_target(self, *path):
+        return law.LocalFileTarget(self.local_data_path(*path))
+
+    def local_central_target(self, *path):
+        return law.LocalFileTarget(self.local_central_path(*path))
 
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     """
@@ -88,12 +105,11 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     configuration is required.
     """
 
-    max_runtime = law.DurationParameter(default=12.0, unit="h", significant=False,
-        description="maximum runtime, default unit is hours, default: 12")
+    max_runtime = law.DurationParameter(default=12.0, unit="h", significant=False, description="maximum runtime, default unit is hours, default: 12")
 
     def htcondor_output_directory(self):
         # the directory where submission meta data should be stored
-        return law.LocalDirectoryTarget(self.local_path())
+        return law.LocalDirectoryTarget(self.local_data_path())
 
     def htcondor_bootstrap_file(self):
         # each job can define a bootstrap file that is executed prior to the actual job
@@ -102,6 +118,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
     def htcondor_job_config(self, config, job_num, branches):
         ana_path = os.getenv("ANALYSIS_PATH")
+        ana_data_path = os.getenv("ANALYSIS_DATA_PATH")
         # render_variables are rendered into all files sent with a job
         config.render_variables["analysis_path"] = ana_path
         # force to run on CC7, http://batchdocs.web.cern.ch/batchdocs/local/submit.html#os-choice
@@ -111,7 +128,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # copy the entire environment
         config.custom_content.append(("getenv", "true"))
 
-        log_path = os.path.join(ana_path, "data", "logs")
+        log_path = os.path.join(ana_data_path, "logs")
         os.makedirs(log_path, exist_ok=True)
         config.custom_content.append(("log", os.path.join(log_path, 'job.$(ClusterId).$(ProcId).log')))
         config.custom_content.append(("output", os.path.join(log_path, 'job.$(ClusterId).$(ProcId).out')))

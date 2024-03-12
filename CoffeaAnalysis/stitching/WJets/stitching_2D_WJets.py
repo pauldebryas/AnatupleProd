@@ -2,20 +2,19 @@
 from coffea import processor
 from coffea.nanoevents import NanoAODSchema
 NanoAODSchema.warn_missing_crossrefs = True
-import awkward as ak
-import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 import json
 import collections
+import os
 
-from CoffeaAnalysis.HNLAnalysis.helpers import files_from_path
 from CoffeaAnalysis.stitching.WJets.CountEventsWJets import CountEventsNJetsHT
+from CoffeaAnalysis.task_helpers import files_from_path
 
 # parameters ----------------------------------------------------------------------------
-file_dir = '/eos/user/p/pdebryas/HNL/nanoV10/Run2_2018/'
-DIR_PATH = '/afs/cern.ch/user/p/pdebryas/HNL_analysis/NewDir/My_HNLTauPrompt'
-
+period = '2017'
+# ---------------------------------------------------------------------------------------
+    
+file_dir = f'{os.getenv("CENTRAL_STORAGE_NANOAOD")}/Run2_{period}/'
 inclusive_samples = ['WJetsToLNu']
 
 exclusive_samples_NJets = [
@@ -165,5 +164,5 @@ for NJets in CountEventsNJetsHT.get_NJets_bins():
 json_object = json.dumps(stitching_weights, indent=4)
  
 # Writing to sample.json
-with open(f'{DIR_PATH}/CoffeaAnalysis/stitching/stitching_weights_2D_WJetsToLNu.json', "w") as outfile:
+with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/stitching/data/{period}/stitching_weights_2D_WJetsToLNu.json', "w") as outfile:
     outfile.write(json_object)

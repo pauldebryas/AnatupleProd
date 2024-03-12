@@ -1,0 +1,38 @@
+excluded_samples:
+  - WWTo1L1Nu2Q
+  - WWTo2L2Nu
+  - WWTo4Q
+  - WZTo1L1Nu2Q
+  - WZTo2Q2L
+  - WZTo3LNu
+  - ZZTo2L2Nu
+  - ZZTo2Q2L
+  - ZZTo2Q2Nu
+  - ZZTo4L
+  - ZZTo4Q
+stitched_samples:
+  DY_samples: 
+    - DYJetsToLL_M-50
+    - DYJetsToLL_0J
+    - DYJetsToLL_1J
+    - DYJetsToLL_2J
+    - DYJetsToLL_LHEFilterPtZ-0To50
+    - DYJetsToLL_LHEFilterPtZ-50To100
+    - DYJetsToLL_LHEFilterPtZ-100To250
+    - DYJetsToLL_LHEFilterPtZ-250To400
+    - DYJetsToLL_LHEFilterPtZ-400To650
+    - DYJetsToLL_LHEFilterPtZ-650ToInf
+  WJets_samples:
+    - WJetsToLNu
+    - W1JetsToLNu
+    - W2JetsToLNu
+    - W3JetsToLNu
+    - W4JetsToLNu
+    - WJetsToLNu_HT-70To100
+    - WJetsToLNu_HT-100To200
+    - WJetsToLNu_HT-200To400
+    - WJetsToLNu_HT-400To600 
+    - WJetsToLNu_HT-600To800 
+    - WJetsToLNu_HT-800To1200 
+    - WJetsToLNu_HT-1200To2500 
+    - WJetsToLNu_HT-2500ToInf
