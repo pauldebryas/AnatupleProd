@@ -49,6 +49,7 @@ class HNLAnalysis_tem(processor.ProcessorABC, HNLProcessor):
         # cut specific for that channel 
         self.cut_tau_idVSe = 6 # require tight isolation against electron for channel with reco electron
 
+        print('Running main analysis')
         # Do the general lepton selection
         events_tem = self.Lepton_selection(events)
 

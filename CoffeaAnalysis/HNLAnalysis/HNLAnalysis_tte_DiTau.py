@@ -50,6 +50,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
         self.cut_mu_iso = 0.15 # veto events with tight mu isolation for ortogonality in signal region for channels with muon
         self.cut_tau_idVSe = 6 # require tight isolation against electron for channel with reco electron
 
+        print('Running main analysis')
         # Do the general lepton selection
         events_tte = self.Lepton_selection(events)
 

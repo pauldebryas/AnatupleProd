@@ -49,6 +49,7 @@ class HNLAnalysis_ttm(processor.ProcessorABC, HNLProcessor):
         # cut specific for that channel
         self.cut_e_iso = 0.15 # veto events with tight e isolation for ortogonality in signal region for channels with electrons
 
+        print('Running main analysis')
         # Do the general lepton selection
         events_ttm = self.Lepton_selection(events)
 

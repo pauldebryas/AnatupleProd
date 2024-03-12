@@ -102,13 +102,18 @@ def get_trigger_correction_mu(Sel_Muon, events, name, period):
     events[f'weightcorr_{name}_TrgSF_singleMu_Down_rel'] =  ceval[HLT_name[period]].evaluate(Area_dir[period], ak.to_numpy(abs(Sel_Muon.eta)), ak.to_numpy(ev_pt), "systdown")/TrgSF
     return TrgSF
 
-def get_trigger_correction_e(Sel_Electron, events, name, period, HLTname = 'Ele32'):
-    if HLTname == 'Ele32':
-        # sf for e trigger from previous analysis: https://twiki.cern.ch/twiki/bin/viewauth/CMS/EgHLTScaleFactorMeasurements
-        fTrigger_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/'+period+'/electron/sf_el_'+period+'_HLTEle32_witherr.root' 
-        evaluator_Trigger = get_scales_fromjson(fTrigger_path)
-        Trigger_efficiency_corr = evaluator_Trigger["SF2D"](Sel_Electron.eta, Sel_Electron.pt)
-        Trigger_efficiency_corr_err = evaluator_Trigger["SF2D_err"](Sel_Electron.eta, Sel_Electron.pt)
+def get_trigger_correction_e(Sel_Electron, events, name, period):
+    HLT_name = {
+        '2018': 'Ele32',
+        '2017': 'Ele32',
+        '2016': 'Ele25',
+        '2016_HIPM': 'Ele25',
+    }
+    # sf for e trigger from previous analysis: https://twiki.cern.ch/twiki/bin/viewauth/CMS/EgHLTScaleFactorMeasurements
+    fTrigger_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/{period}/electron/sf_el_{period}_HLT{HLT_name[period]}_witherr.root' 
+    evaluator_Trigger = get_scales_fromjson(fTrigger_path)
+    Trigger_efficiency_corr = evaluator_Trigger["SF2D"](Sel_Electron.eta, Sel_Electron.pt)
+    Trigger_efficiency_corr_err = evaluator_Trigger["SF2D_err"](Sel_Electron.eta, Sel_Electron.pt)
 
     events[f'weightcorr_{name}_TrgSF_singleEle_Central'] = Trigger_efficiency_corr
     events[f'weightcorr_{name}_TrgSF_singleEle_Up_rel'] = (Trigger_efficiency_corr+Trigger_efficiency_corr_err)/Trigger_efficiency_corr

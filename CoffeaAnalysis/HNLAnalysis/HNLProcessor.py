@@ -145,8 +145,11 @@ class HNLProcessor():
                     sf = ak.where(mask,tau_es_up, tau_es)
                 if lst[-1] == 'down':
                     sf = ak.where(mask,tau_es_down, tau_es)
+                Delta_met = events.SelTau.pt*sf - events.SelTau.pt*tau_es
+                Delta_met = ak.sum(Delta_met, axis=1)
                 events["SelTau","pt"] = events.SelTau.pt*sf
                 events["SelTau","mass"] = events.SelTau.mass*sf
+                events["MET","pt"] = events.MET.pt - Delta_met
         #apply cut on Tau pt using corrected energy
         events['SelTau'] = events.SelTau[events.SelTau.pt > self.cut_tau_pt]
         

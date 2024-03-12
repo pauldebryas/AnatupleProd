@@ -125,8 +125,6 @@ def compute_reweight(HLT, xsec, event_nb, period):
     for area in all_area_period[period]:
         Data_sample = f'{HLT}_{period}{area}'
         luminosity += compute_lumi(Data_sample, period)
-    
-    print(f'Total luminosity for {period}: {luminosity}')
 
     return luminosity*xsec/event_nb
 
@@ -245,9 +243,14 @@ def bjet_info(events):
 def save_bjets(save_file, events):
     ''' Save in a root file bjets info in "bjets" Tree
     '''
-    while os.path.isfile(save_file):
-        save_file = save_file[:-6]+ str(int(save_file[-6:-5])+1) +'.root'
+    # Split the original string based on the delimiter
+    parts = save_file.split("_anatuple_")
+    parts[1] = parts[1][:-5]
 
+    while os.path.isfile(save_file):
+        save_file = parts[0] + "_anatuple_" + str(int(parts[1])+1) +'.root'
+
+    print(f'... saving bjets in in file {save_file}')
     with uproot.create(save_file, compression=uproot.ZLIB(4)) as file:
         if np.sum(ak.num(bjet_info(events))) != 0:
             file["bjets"] = bjet_info(events)
@@ -256,6 +259,7 @@ def save_bjets(save_file, events):
 def save_Event(save_file, lst, Tree_name):
     ''' Save in a root file a Tree (Tree_name) containing lst
     '''
+    print(f'... saving events file {save_file}')
     with uproot.create(save_file, compression=uproot.ZLIB(4)) as file:
         file[Tree_name] = lst
     return
@@ -286,7 +290,6 @@ def save_anatuple_common(ds, events, tag, channel, save_weightcorr):
 
     if save_weightcorr == True:
         weightcorr_list = [element for element in events.fields if element.startswith('weightcorr_')]
-        print(weightcorr_list)
         for elem in weightcorr_list:
             lst[elem] = np.array(events[elem])
 
@@ -450,7 +453,7 @@ def matching_Ele32(events, Sel_Electron, min_dr_cut = 0.2):
     ''' Return Electron among Sel_Electron collection that match Trigger object (Ele32 HLT) and within DeltaR(TrigObj,Sel_Electron)<min_dr_cut
         Trigger object is a electron (id == 11) with TrigObj_filterBits 2= 1e WPTight
     '''
-    Trigger_Electron = events.TrigObj[ (abs(events.TrigObj.id) == 11) & ((events.TrigObj.filterBits & (2)) != 0)]  
+    Trigger_Electron = events.TrigObj[ (abs(events.TrigObj.id) == 11) & ((events.TrigObj.filterBits & (2)) != 0) & (events.TrigObj.pt > 32.)]  
     trigger_electron, sel_electron = ak.unzip(ak.cartesian([Trigger_Electron, Sel_Electron], nested=True))
 
     Sel_Electron = sel_electron[ak.argmin(delta_r(trigger_electron, sel_electron), axis=-1, keepdims = True , mask_identity = True)] # Select for each pair (trigger/reco_e) the reco_e that match the best with trigger_e
@@ -460,14 +463,35 @@ def matching_Ele32(events, Sel_Electron, min_dr_cut = 0.2):
     
     return Sel_Electron
 
-def Ele32_Electron_sel(events):
+def matching_Ele25(events, Sel_Electron, min_dr_cut = 0.2):
+    ''' Return Electron among Sel_Electron collection that match Trigger object (Ele25 HLT) and within DeltaR(TrigObj,Sel_Electron)<min_dr_cut
+        Trigger object is a electron (id == 11) with TrigObj_filterBits 2= 1e WPTight
+    '''
+    Trigger_Electron = events.TrigObj[ (abs(events.TrigObj.id) == 11) & ((events.TrigObj.filterBits & (2)) != 0) & (events.TrigObj.pt > 25.)]   
+    trigger_electron, sel_electron = ak.unzip(ak.cartesian([Trigger_Electron, Sel_Electron], nested=True))
+
+    Sel_Electron = sel_electron[ak.argmin(delta_r(trigger_electron, sel_electron), axis=-1, keepdims = True , mask_identity = True)] # Select for each pair (trigger/reco_e) the reco_e that match the best with trigger_e
+    Sel_trigger = trigger_electron[ak.argmin(delta_r(trigger_electron, sel_electron), axis=-1, keepdims = True , mask_identity = True)] 
+    Sel_Electron = Sel_Electron[delta_r(Sel_trigger, Sel_Electron) < min_dr_cut]
+    Sel_Electron = ak.flatten(Sel_Electron, axis=-1)
+    
+    return Sel_Electron
+
+def Trigger_Electron_sel(events, period):
     ''' Select Trigger electron for Ele32 HLT
         Require min pt/eta for trigger obj matching for at leat 1 electron. 
         According to the central electron SFs recommendations it should be online pt + 2 GeV 
         Select one Electron that match trigger object
         We take the one with minimum pfRelIso03_all in case of ambiguity
     '''
-    Trigger_Electron_candidates = events.SelElectron[(events.SelElectron.pt > 34.)]
+    if period == '2018':
+        Trigger_Electron_candidates = events.SelElectron[(events.SelElectron.pt > 34.)]
+    if period == '2017':
+        Trigger_Electron_candidates = events.SelElectron[(events.SelElectron.pt > 34.)]
+    if period == '2016':
+        Trigger_Electron_candidates = events.SelElectron[(events.SelElectron.pt > 27.) & (np.abs(events.SelElectron.eta) < 2.1)]
+    if period == '2016_HIPM':
+        Trigger_Electron_candidates = events.SelElectron[(events.SelElectron.pt > 27.) & (np.abs(events.SelElectron.eta) < 2.1)]
 
     #make sure at least 1 muon satisfy this condition
     cut_mask = ak.num(Trigger_Electron_candidates) >= 1
@@ -475,7 +499,15 @@ def Ele32_Electron_sel(events):
     Trigger_Electron_candidates = Trigger_Electron_candidates[cut_mask]
 
     #select the one that match trigger 
-    Trigger_Electron_candidates = matching_Ele32(events, Trigger_Electron_candidates)
+    if period == '2018':
+        Trigger_Electron_candidates = matching_Ele32(events, Trigger_Electron_candidates)
+    if period == '2017':
+        Trigger_Electron_candidates = matching_Ele32(events, Trigger_Electron_candidates)
+    if period == '2016':
+        Trigger_Electron_candidates = matching_Ele25(events, Trigger_Electron_candidates)
+    if period == '2016_HIPM':
+        Trigger_Electron_candidates = matching_Ele25(events, Trigger_Electron_candidates)
+
     cut_mask = ak.num(Trigger_Electron_candidates) >= 1
     events = events[cut_mask]
     Trigger_Electron_candidates = Trigger_Electron_candidates[cut_mask]

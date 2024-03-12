@@ -4,9 +4,17 @@ import os
 
 #parameters
 # Path to the ROOT file
-year = '2018'
-Root_file_path = 'electron/sf_el_2018_HLTEle32.root' 
-new_root_file_path = 'electron/sf_el_2018_HLTEle32_witherr.root'
+year = '2016_HIPM'
+# ------------------------
+
+HLT_name = {
+    '2018': 'Ele32',
+    '2017': 'Ele32',
+    '2016': 'Ele25',
+    '2016_HIPM': 'Ele25'
+}
+Root_file_path = f'electron/sf_el_{year}_HLT{HLT_name[year]}.root' 
+new_root_file_path = f'electron/sf_el_{year}_HLT{HLT_name[year]}_witherr.root'
 
 
 correction_folder_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/{year}/'

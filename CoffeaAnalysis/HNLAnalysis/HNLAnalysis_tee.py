@@ -4,7 +4,7 @@ from coffea import processor
 
 from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
 from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_e, compute_sf_tau, get_trigger_correction_e, compute_sf_L1PreFiring, get_pileup_correction
-from CoffeaAnalysis.HNLAnalysis.helpers import IsoElectron_mask, Ele32_Electron_sel, FinalTau_sel, delta_r, bjet_candidates
+from CoffeaAnalysis.HNLAnalysis.helpers import IsoElectron_mask, Trigger_Electron_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
@@ -17,8 +17,11 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
             acc_dict[f'sumw_{selection}'] = processor.defaultdict_accumulator(float)
         self._accumulator = processor.dict_accumulator(acc_dict)
 
-        #the corresponding data sample for tee channel (HLT=Ele32)
-        self.dataHLT = 'EGamma'
+        #the corresponding data sample for tee channel
+        if self.period == '2018':
+            self.dataHLT = 'EGamma'
+        else:
+            self.dataHLT = 'SingleElectron'
 
     @property
     def accumulator(self):
@@ -49,6 +52,7 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
         self.cut_mu_iso = 0.15 # veto events with tight mu isolation for ortogonality in signal region for channels with muon
         self.cut_tau_idVSe = 6 # require tight isolation against electron for channel with reco electron
 
+        print('Running main analysis')
         # Do the general lepton selection
         events_tee = self.Lepton_selection(events)
 
@@ -121,14 +125,21 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
             out[f'n_ev_noIsoMuon'][self.ds] += len(events_tee)
 
         # events should pass most efficient HLT (Ele32_WPTight_Gsf_L1DoubleEG)
-        events_tee = events_tee[events_tee.HLT.Ele32_WPTight_Gsf_L1DoubleEG]
+        if self.period == '2018':
+            events_tee = events_tee[events_tee.HLT.Ele32_WPTight_Gsf]
+        if self.period == '2017':
+            events_tee = events_tee[events_tee.HLT.Ele32_WPTight_Gsf_L1DoubleEG]
+        if self.period == '2016':
+            events_tee = events_tee[events_tee.HLT.Ele25_eta2p1_WPTight_Gsf]
+        if self.period == '2016_HIPM':
+            events_tee = events_tee[events_tee.HLT.Ele25_eta2p1_WPTight_Gsf]
 
         if out != None:
             out[f'sumw_HLT'][self.ds] += ak.sum(events_tee.genWeight)
             out[f'n_ev_HLT'][self.ds] += len(events_tee)
 
         #find electron with minimum pfRelIso03_all, and matching Ele32 trigger. In case same isolation, we take the first one by default
-        events_tee, Sel_Electron = Ele32_Electron_sel(events_tee)
+        events_tee, Sel_Electron = Trigger_Electron_sel(events_tee, self.period)
 
         if out != None:
             out[f'sumw_eSelection'][self.ds] += ak.sum(events_tee.genWeight)

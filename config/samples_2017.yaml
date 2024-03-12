@@ -339,23 +339,23 @@ ST_tW_top_5f_inclusiveDecays:
   miniAOD: /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
   nanoAOD: /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
   sampleType: mc
-SingleElectron_Run2017B:
+SingleElectron_2017B:
   miniAOD: /SingleElectron/Run2017B-UL2017_MiniAODv2-v1/MINIAOD
   nanoAOD: /SingleElectron/Run2017B-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
-SingleElectron_Run2017C:
+SingleElectron_2017C:
   miniAOD: /SingleElectron/Run2017C-UL2017_MiniAODv2-v1/MINIAOD
   nanoAOD: /SingleElectron/Run2017C-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
-SingleElectron_Run2017D:
+SingleElectron_2017D:
   miniAOD: /SingleElectron/Run2017D-UL2017_MiniAODv2-v1/MINIAOD
   nanoAOD: /SingleElectron/Run2017D-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
-SingleElectron_Run2017E:
+SingleElectron_2017E:
   miniAOD: /SingleElectron/Run2017E-UL2017_MiniAODv2-v1/MINIAOD
   nanoAOD: /SingleElectron/Run2017E-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
-SingleElectron_Run2017F:
+SingleElectron_2017F:
   miniAOD: /SingleElectron/Run2017F-UL2017_MiniAODv2-v1/MINIAOD
   nanoAOD: /SingleElectron/Run2017F-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
