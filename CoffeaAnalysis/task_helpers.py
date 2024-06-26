@@ -75,16 +75,66 @@ def cleanup_ds(ds, output_tmp_folder, output_root_folder):
         shutil.move(source, destination)
         return
 
-    if len(filelist) > 1:
+    if (len(filelist) > 1) & (len(filelist) < 1000):
         hadd_cmd = 'hadd -n 11 ' + output_root_folder + '/' + ds + '_anatuple.root ' + filelist_cmd 
         if debug_mode == True:
             print('Running the folowing command:')
             print(hadd_cmd)
         os.system(hadd_cmd)
- 
+
         for file in filelist:
-            if debug_mode == True:
-                print('Run the folowing command:')
-                print(f"os.remove({os.path.join(output_tmp_folder, file)})")
-            os.remove(os.path.join(output_tmp_folder, file))
+           if debug_mode == True:
+               print('Run the folowing command:')
+               print(f"os.remove({os.path.join(output_tmp_folder, file)})")
+           os.remove(os.path.join(output_tmp_folder, file))
+        return
+
+    if (len(filelist) >= 1000):
+        split_int = int(len(filelist)/2)
+
+        filelist_cmd_1 = ''
+        filelist_cmd_2 = ''
+
+        for file in files[0:split_int]:
+            if ds == file.split('_anatuple_')[0]:
+                filelist_cmd_1 = filelist_cmd_1 + output_tmp_folder + file + ' '
+
+        for file in files[split_int:]:
+            if ds == file.split('_anatuple_')[0]:
+                filelist_cmd_2 = filelist_cmd_2 + output_tmp_folder + file + ' '
+
+
+        hadd_cmd_1 = 'hadd -n 11 ' + output_root_folder + '/' + ds + '_anatuple_0.root ' + filelist_cmd_1
+        hadd_cmd_2 = 'hadd -n 11 ' + output_root_folder + '/' + ds + '_anatuple_1.root ' + filelist_cmd_2
+
+        if debug_mode == True:
+            print('Running the folowing command:')
+            print(hadd_cmd_1)
+            print(hadd_cmd_2)
+        os.system(hadd_cmd_1)
+        os.system(hadd_cmd_2)
+
+        hadd_cmd_final = 'hadd -n 11 ' + output_root_folder + '/' + ds + '_anatuple.root '  + output_root_folder + '/' + ds + '_anatuple_0.root ' + output_root_folder + '/' + ds + '_anatuple_1.root '
+        if debug_mode == True:
+            print('Running the folowing command:')
+            print(hadd_cmd_final)
+        os.system(hadd_cmd_final)
+
+        if debug_mode == True:
+            print('Running the folowing command:')
+            print(f"os.remove({os.path.join(output_tmp_folder, ds + '_anatuple_0.root')})")
+        os.remove(os.path.join(output_root_folder, ds + '_anatuple_0.root'))
+        if debug_mode == True:
+            print('Running the folowing command:')
+            print(f"os.remove({os.path.join(output_tmp_folder, ds + '_anatuple_1.root')})")
+        os.remove(os.path.join(output_root_folder, ds + '_anatuple_1.root'))
+
+        for file in filelist:
+           if debug_mode == True:
+               print('Run the folowing command:')
+               print(f"os.remove({os.path.join(output_tmp_folder, file)})")
+           os.remove(os.path.join(output_tmp_folder, file))
+           
+        return
+    
     return

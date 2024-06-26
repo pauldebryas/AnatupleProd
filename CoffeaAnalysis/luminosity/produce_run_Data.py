@@ -4,8 +4,9 @@ from run_tools.sh_tools import sh_call
 import json
 import csv
 
+#produce files where run number of data samples are stored
 #parameters
-year = '2016'
+year = '2016_HIPM'
 #----------------------------------------------------
 
 # produce dir if doesn't exist called run_Data_{year}

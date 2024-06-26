@@ -3,13 +3,13 @@ import awkward as ak
 from coffea import processor
 
 from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
-from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_mu, compute_sf_tau, get_trigger_correction_mu, compute_sf_L1PreFiring, get_pileup_correction
+from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_mu, compute_sf_tau, get_trigger_correction_mu, compute_sf_L1PreFiring, get_pileup_correction, get_BTag_sf
 from CoffeaAnalysis.HNLAnalysis.helpers import IsoMuon_mask, Trigger_Muon_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs, periods):
-        HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods)
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT):
+        HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT)
         acc_dict = {}
         self.selections = self.get_selections()
         for selection in self.selections:
@@ -46,7 +46,7 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
         events, out = self.init_process(out, events)
 
         # cut specific for that channel
-        self.cut_e_iso = 0.15 # veto events with tight e isolation for ortogonality in signal region for channels with electrons 
+        #self.cut_e_iso = 0.15 # veto events with tight e isolation for ortogonality in signal region for channels with electrons 
 
         print('Running main analysis')
         # Do the general lepton selection
@@ -66,7 +66,7 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
             # Compute Tau_ES for genuineTau
             for Tau_ES_corr in Tau_ES_corr_list:
                 for val_corr in ['up','down']:
-                    Treename = 'Events_GenuineTauES_'+Tau_ES_corr+'_'+val_corr
+                    Treename = 'Events_GenuineTauES_'+Tau_ES_corr+'_'+self.period+'_'+val_corr
                     print('TAU ES corrections: saving '+ Treename)
                     events_corr = self.Lepton_selection(events, Treename)
                     events_corr, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_corr)
@@ -76,7 +76,7 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
             # Compute Tau_ES for genuineElectron
             for Tau_ES_corr in Tau_ES_corr_list:
                 for val_corr in ['up','down']:
-                    Treename = 'Events_GenuineElectronES_'+Tau_ES_corr+'_'+val_corr
+                    Treename = 'Events_GenuineElectronES_'+Tau_ES_corr+'_'+self.period+'_'+val_corr
                     print('TAU ES corrections: saving '+ Treename)
                     events_corr = self.Lepton_selection(events, Treename)
                     events_corr, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_corr)
@@ -85,7 +85,7 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
 
             # Compute Tau_ES for genuineMuon
             for val_corr in ['up','down']:
-                Treename = 'Events_GenuineMuonES_'+val_corr
+                Treename = 'Events_GenuineMuonES'+'_'+self.period+'_'+val_corr
                 print('TAU ES corrections: saving '+ Treename)
                 events_corr = self.Lepton_selection(events, Treename)
                 events_corr, Sel_Muon, Sel_Muon2, Sel_Tau = self.analyse_tmm(events_corr)
@@ -128,6 +128,8 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
             events_tmm = events_tmm[events_tmm.HLT.IsoMu27]
         if self.period == '2016':
             events_tmm = events_tmm[events_tmm.HLT.IsoMu24]
+        if self.period == '2016_HIPM':
+            events_tmm = events_tmm[events_tmm.HLT.IsoMu24]
 
         if out != None:
             out[f'sumw_HLT'][self.ds] += ak.sum(events_tmm.genWeight)
@@ -168,9 +170,9 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
         # Save bjets candidates
         bjet_candidates(events_tmm, Sel_Muon, Sel_Muon2, Sel_Tau, self.period)
 
-        if len(events_tmm) == 0:
-            print('0 events pass selection')
-            return
+        # if len(events_tmm) == 0:
+        #     print('0 events pass selection')
+        #     return
 
         # Apply corrections for MC
         if self.mode != 'Data':
@@ -191,14 +193,15 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
         Trigger_eff_corr_mu2 = get_trigger_correction_mu(Sel_Muon2, events, 'Muon2', self.period) # compute Trigger sf for Muon2
         sf_L1PreFiring = compute_sf_L1PreFiring(events)
         PU_corr, PU_corr_up, PU_corr_down = get_pileup_correction(events, self.period)
-        events.genWeight = events.genWeight * sf_tau * sf_mu1 * sf_mu2 * Trigger_eff_corr_mu * sf_L1PreFiring * PU_corr
+        BTag_sf = get_BTag_sf(events, self.period)
+        events.genWeight = events.genWeight * sf_tau * sf_mu1 * sf_mu2 * Trigger_eff_corr_mu * sf_L1PreFiring * PU_corr * BTag_sf
         return events
     
     def save_anatuple_tmm(self, events, Sel_Muon, Sel_Muon2, Sel_Tau, tag, save_weightcorr=True):
 
         exclude_list = ['genPartIdx']
         
-        save_file, lst = save_anatuple_common(self.ds, events, tag, 'tmm', save_weightcorr)
+        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tmm', save_weightcorr)
 
         #info specific to the channel
         lst["nAdditionalMuon"] = np.array(events.nAdditionalMuon)

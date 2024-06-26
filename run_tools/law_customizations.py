@@ -122,7 +122,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # render_variables are rendered into all files sent with a job
         config.render_variables["analysis_path"] = ana_path
         # force to run on CC7, http://batchdocs.web.cern.ch/batchdocs/local/submit.html#os-choice
-        config.custom_content.append(("requirements", "(OpSysAndVer =?= \"CentOS7\")"))
+        #config.custom_content.append(("requirements", "(OpSysAndVer =?= \"CentOS9\")"))
         # maximum runtime
         config.custom_content.append(("+MaxRuntime", int(math.floor(self.max_runtime * 3600)) - 1))
         # copy the entire environment
@@ -130,7 +130,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
         log_path = os.path.join(ana_data_path, "logs")
         os.makedirs(log_path, exist_ok=True)
-        config.custom_content.append(("log", os.path.join(log_path, 'job.$(ClusterId).$(ProcId).log')))
-        config.custom_content.append(("output", os.path.join(log_path, 'job.$(ClusterId).$(ProcId).out')))
-        config.custom_content.append(("error", os.path.join(log_path, 'job.$(ClusterId).$(ProcId).err')))
+        config.custom_content.append(("log", os.path.join(log_path, f'job.$(ClusterId).{branches}.log')))
+        config.custom_content.append(("output", os.path.join(log_path, f'job.$(ClusterId).{branches}.out')))
+        config.custom_content.append(("error", os.path.join(log_path, f'job.$(ClusterId).{branches}.err')))
         return config

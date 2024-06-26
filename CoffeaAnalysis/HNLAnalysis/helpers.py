@@ -119,28 +119,40 @@ def compute_reweight(HLT, xsec, event_nb, period):
     all_area_period = {
         '2018': ['A','B','C','D'],
         '2017': ['B','C','D','E','F'],
+        '2016': ['F','G','H'],
+        '2016_HIPM': ['B','C','D','E','F'],
     }
     #compute luminosity for all area of the given HLT ds used
     luminosity = 0
     for area in all_area_period[period]:
         Data_sample = f'{HLT}_{period}{area}'
         luminosity += compute_lumi(Data_sample, period)
+    print(f'computed luminosity: {luminosity}')
 
     return luminosity*xsec/event_nb
 
-def apply_MET_Filter(events):
+def apply_MET_Filter(events, period):
     ''' MET filter folowing https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#2018_2017_data_and_MC_UL
     '''
-    events = events[events.Flag.goodVertices & 
-                    events.Flag.globalSuperTightHalo2016Filter & 
-                    events.Flag.HBHENoiseFilter & 
-                    events.Flag.HBHENoiseIsoFilter & 
-                    events.Flag.EcalDeadCellTriggerPrimitiveFilter & 
-                    events.Flag.BadPFMuonFilter & 
-                    events.Flag.BadPFMuonDzFilter & 
-                    #events.Flag.hfNoisyHitsFilter & 
-                    events.Flag.eeBadScFilter & 
-                    events.Flag.ecalBadCalibFilter]
+    if period in ['2018','2017']:
+        events = events[events.Flag.goodVertices & 
+                        events.Flag.globalSuperTightHalo2016Filter & 
+                        events.Flag.HBHENoiseFilter & 
+                        events.Flag.HBHENoiseIsoFilter & 
+                        events.Flag.EcalDeadCellTriggerPrimitiveFilter & 
+                        events.Flag.BadPFMuonFilter & 
+                        events.Flag.BadPFMuonDzFilter & 
+                        events.Flag.eeBadScFilter & 
+                        events.Flag.ecalBadCalibFilter]
+    if period in ['2016','2016_HIPM']:
+        events = events[events.Flag.goodVertices & 
+                        events.Flag.globalSuperTightHalo2016Filter & 
+                        events.Flag.HBHENoiseFilter & 
+                        events.Flag.HBHENoiseIsoFilter & 
+                        events.Flag.EcalDeadCellTriggerPrimitiveFilter & 
+                        events.Flag.BadPFMuonFilter & 
+                        #events.Flag.BadPFMuonDzFilter & #not available 
+                        events.Flag.eeBadScFilter]
     return events
 
 def apply_reweight(ds, events, stitched_list, HLT, xsecs, period):
@@ -206,14 +218,14 @@ def delta_r(v1, v2):
     return np.sqrt(delta_r2(v1, v2))
 
 def bjet_candidates(events, Lepton1, Lepton2, Lepton3, period, delta_r_cut = 0.5):
-    ''' Return bjet (btagDeepFlavB > LooseWP) with pt > 20, eta < 2.5, jetId >= 4 which do no not match selected lepton
+    ''' Return bjet (btagDeepFlavB > LooseWP) with pt > 20, |eta| < 2.5, jetId >= 4 which do no not match selected lepton
     '''
     # btag wp
     cset = get_correction_central('btag', period)
     #loose WP value
     deepJet_wp_value = cset["deepJet_wp_values"].evaluate("L")
 
-    bjets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.jetId >= 4)]
+    bjets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.eta > -2.5) & (events.Jet.jetId >= 4)]
     drcut_jetslep1 = delta_r(Lepton1,bjets_candidates) > delta_r_cut
     drcut_jetslep2 = delta_r(Lepton2,bjets_candidates) > delta_r_cut
     drcut_jetslep3 = delta_r(Lepton3,bjets_candidates) > delta_r_cut
@@ -264,10 +276,10 @@ def save_Event(save_file, lst, Tree_name):
         file[Tree_name] = lst
     return
 
-def save_anatuple_common(ds, events, tag, channel, save_weightcorr):
+def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
     ''' Return a list of common information to save (make sure save_file is not overwrite)
     '''
-    path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{tag}/{channel}/{ds}/'
+    path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{period}/{tag}/{channel}/{ds}/'
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -335,18 +347,21 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
     lst = save_anatuple_lepton(Sel_Tau, lst, exclude_list, name)
 
     #save matching Jet info
-    Tau_Jet = matching_jet(events, Sel_Tau)
-    lst[f"{name}_Jet_pt"] = np.array(ak.flatten(Tau_Jet['pt']))
-    lst[f"{name}_Jet_eta"] = np.array(ak.flatten(Tau_Jet['eta']))
-    lst[f"{name}_Jet_phi"] = np.array(ak.flatten(Tau_Jet['phi']))
-    lst[f"{name}_Jet_mass"] = np.array(ak.flatten(Tau_Jet['mass']))
-    lst[f"{name}_Jet_jetId"] = np.array(ak.flatten(Tau_Jet['jetId']))
-    lst[f"{name}_Jet_valid"] = np.array(ak.flatten(Tau_Jet['valid']))
+    if len(Sel_Tau) == 0:
+        print('0 events pass selection')
+    else:
+        Tau_Jet = matching_jet(events, Sel_Tau)
+        lst[f"{name}_Jet_pt"] = np.array(ak.flatten(Tau_Jet['pt']))
+        lst[f"{name}_Jet_eta"] = np.array(ak.flatten(Tau_Jet['eta']))
+        lst[f"{name}_Jet_phi"] = np.array(ak.flatten(Tau_Jet['phi']))
+        lst[f"{name}_Jet_mass"] = np.array(ak.flatten(Tau_Jet['mass']))
+        lst[f"{name}_Jet_jetId"] = np.array(ak.flatten(Tau_Jet['jetId']))
+        lst[f"{name}_Jet_valid"] = np.array(ak.flatten(Tau_Jet['valid']))
     
-    if mode != 'Data':
-        Tau_GenJet = matching_Genjet(events, Sel_Tau)
-        for field in Tau_GenJet.fields:
-            lst[f"{name}_GenJet_{field}"] = np.array(Tau_GenJet[field])
+        if mode != 'Data':
+            Tau_GenJet = matching_Genjet(events, Sel_Tau)
+            for field in Tau_GenJet.fields:
+                lst[f"{name}_GenJet_{field}"] = np.array(Tau_GenJet[field])
         
     return lst
 
@@ -425,6 +440,8 @@ def Trigger_Muon_sel(events, period):
         Trigger_Muon_candidates = events.SelMuon[(events.SelMuon.pt > 29.) & (np.abs(events.SelMuon.eta) < 2.1)]
     if period == '2016':
         Trigger_Muon_candidates = events.SelMuon[(events.SelMuon.pt > 26.) & (np.abs(events.SelMuon.eta) < 2.1)]
+    if period == '2016_HIPM':
+        Trigger_Muon_candidates = events.SelMuon[(events.SelMuon.pt > 26.) & (np.abs(events.SelMuon.eta) < 2.1)]
 
     #make sure at least 1 muon satisfy this condition
     cut_mask = ak.num(Trigger_Muon_candidates) >= 1
@@ -437,6 +454,8 @@ def Trigger_Muon_sel(events, period):
     if period == '2017':
         Trigger_Muon_candidates = matching_IsoMu27(events, Trigger_Muon_candidates)
     if period == '2016':
+        Trigger_Muon_candidates = matching_IsoMu24(events, Trigger_Muon_candidates)
+    if period == '2016_HIPM':
         Trigger_Muon_candidates = matching_IsoMu24(events, Trigger_Muon_candidates)
 
     cut_mask = ak.num(Trigger_Muon_candidates) >= 1

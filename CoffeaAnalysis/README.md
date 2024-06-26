@@ -1,9 +1,35 @@
-## How to run CoffeaAnalysis 
+## How to run the Analysis 
 
 ##  Require
 
-- stitching files for DY and WJets
-- counter.pkl which save the original sumw (before skimming) of MC samples (backgrounds and HNL signal) (for the reweighting of the events)
+- stitching files for DY and WJets. Change the period in the .py file.
+```shell
+python CoffeaAnalysis/stitching/DY/stitching_2D_DY.py
+python CoffeaAnalysis/stitching/WJets/stitching_2D_WJets.py
+```
+Output will be saved in CoffeaAnalysis/stitching/data/ folder.
+
+- luminosity: produce run_Data files. Change the period in the .py file. Need csv files (recipe available in LUMI POG Twiki).
+```shell
+python CoffeaAnalysis/luminosity/produce_run_Data.py
+```
+
+- counter.pkl which save the original sumw (before skimming) of MC samples (backgrounds and HNL signal) used for the reweighting of the events. Here is an example on how to run the task:
+```shell
+law run RunCounter --periods 2018
+```
+
+- corrections: add err histograms for the RECO and Trigger, needed to compute electron SFs variation.
+```shell
+python CoffeaAnalysis/corrections/Add_err_hist_RECOSF.py
+python CoffeaAnalysis/corrections/Add_err_hist_triggerSF.py
+```
+
+- BTAG SFs. Save the root files and convert to json correction schema
+```shell
+python CoffeaAnalysis/corrections/BTagSF/compute_BTagSF.py
+python CoffeaAnalysis/corrections/BTagSF/compute_meanBTagSF.py
+```
 
 ##  Output
 
@@ -27,29 +53,24 @@ Then you can use law to monitor and run the different tasks
 law index --verbose
 ```
 
-Tasks can be interdependent. To not mix up jobs, specify the same "version" parameter for all the tasks (here we use "nanoV10" used to produce nanoAOD root files).
-For now, we used only 2018 samples.
-
-Selection may involve: "tag" parameter is used to differenciate between selection.
-
-Here an example for ttm channel. Same thing for tte tee tmm tem.
+Here an example to run ttm channel for 2018 period:
 
 - You can print task dependencies with
 ```shell
-law run Analysis --version nanoV10 --periods 2018 --tag TEST --Analysis-channel ttm --print-deps -1
+law run Analysis --periods 2018 --tag TAG --channel ttm --print-deps -1
 ```
 
 - You can print task status of the task with
 ```shell
-law run Analysis --version nanoV10 --periods 2018 --tag TEST --Analysis-channel ttm --print-status -1
+law run Analysis --periods 2018 --tag TAG --channel ttm --print-status -1
 ```
 
 - Run a single branch locally (useful for debugging)
 ```shell
-law run Analysis --version nanoV10 --periods 2018 --tag TEST --Analysis-channel ttm --Analysis-workflow local --branch 41
+law run Analysis --periods 2018 --tag TAG --channel ttm --Analysis-workflow local --branch 41
 ```
 
 - Run all branches with HTcondor
 ```shell
-law run Analysis --version nanoV10 --periods 2018 --tag TEST --Analysis-channel ttm
+law run Analysis --periods 2018 --tag TAG --channel ttm
 ```

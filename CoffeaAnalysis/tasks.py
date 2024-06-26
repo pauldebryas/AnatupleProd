@@ -144,20 +144,23 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
 
         return data_samples_list , MC_branches
     
-    def create_branch_map(self):
-
+    def load_dataHLT(self):
         #adding data to the branches
-        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte']:
+        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte','tte_DiTau']:
             raise RuntimeError(f"Incorrect channel name: {self.channel}")
 
         if self.channel in ['ttm','tmm','tem']:
             self.dataHLT='SingleMuon'
         if self.channel in ['tee', 'tte']:
-            self.dataHLT='EGamma'
-        #if self.channel in ['ttt','tte']:
-        #    self.dataHLT='Tau'
-        #    self.dataHLT='EGamma'
-
+            if self.periods == '2018':
+                self.dataHLT='EGamma'
+            else:
+                self.dataHLT='SingleElectron'
+        if self.channel in ['tte_DiTau', 'ttt']:
+            self.dataHLT='Tau'
+        return
+    def create_branch_map(self):
+        self.load_dataHLT()
         # load MC branches 
         data_samples_list , branches = self.load_samples()
         branch_index = len(branches)
@@ -171,6 +174,7 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
 
         output_file = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl', f'{self.dataHLT}_{self.periods}_cutflow.pkl')
         branches[branch_index] = (data_sample_name, None, 'data', data_files, output_file)
+        #print(branches)
         return branches
     
     def output(self):
@@ -178,8 +182,8 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
         return self.local_analysis_target(output_file)
 
     def run(self):
-
         #self.load_sample_configs()
+        self.load_dataHLT()
         sample_name, xsecs, sampleType, files, output_file = self.branch_data
 
         samples_list = {}
@@ -200,7 +204,7 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
         if not os.path.exists(output_pkl_folder):
             os.makedirs(output_pkl_folder)
 
-        output_tmp_folder = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.tag}/{self.channel}/{sample_name}/'
+        output_tmp_folder = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.periods}/{self.tag}/{self.channel}/{sample_name}/'
         if os.path.exists(output_tmp_folder):
             print(f'A tmp folder which store tmp anatuple files exist already for dataset {sample_name}: being deleted')
             shutil.rmtree(output_tmp_folder)
@@ -216,7 +220,7 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
         result = processor.run_uproot_job(
             samples_list,
             "Events",
-            HNLAnalysis(stitched_list, self.tag, xsecs, self.periods),
+            HNLAnalysis(stitched_list, self.tag, xsecs, self.periods, self.dataHLT),
             processor.iterative_executor,
             {"schema": NanoAODSchema, 'workers': 6},
         )

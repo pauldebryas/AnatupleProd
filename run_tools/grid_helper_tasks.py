@@ -95,9 +95,11 @@ class CreateSamplesConfigFile(Task):
             endOfquery = splitminiAOD[1]
             endOfquery = endOfquery.replace('/MINIAODSIM', '')
             endOfquery = endOfquery.replace(str_prodMiniAOD[1], '')
-            endOfquery = endOfquery[2:-2]
+            if self.periods == '2016_HIPM': 
+                endOfquery = endOfquery[2:-4]
+            else:
+                endOfquery = endOfquery[2:-2]
             query = startOfquery +'*'+ endOfquery +'*'+ '/NANOAODSIM'
-
         # use the following command to look at the files corresonding to the data sample: dasgoclient -json -query 'dataset= ...' 
         _, output = sh_call(['dasgoclient', '-json', '-query', f'dataset={query}'], catch_stdout=True)
         output=json.loads(output)

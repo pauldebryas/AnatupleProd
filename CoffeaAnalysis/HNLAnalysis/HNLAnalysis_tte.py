@@ -3,26 +3,20 @@ import awkward as ak
 from coffea import processor
 
 from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
-from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_e, compute_sf_tau, get_trigger_correction_e, compute_sf_L1PreFiring, get_pileup_correction
+from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_e, compute_sf_tau, get_trigger_correction_e, compute_sf_L1PreFiring, get_pileup_correction, get_BTag_sf
 from CoffeaAnalysis.HNLAnalysis.helpers import IsoElectron_mask, Trigger_Electron_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 # test with Ele32_WPTight_Gsf_L1DoubleEG trigger
 class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs, periods):
-        HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods)
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT):
+        HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT)
         acc_dict = {}
         self.selections = self.get_selections()
         for selection in self.selections:
             acc_dict[f'n_ev_{selection}'] = processor.defaultdict_accumulator(int)
             acc_dict[f'sumw_{selection}'] = processor.defaultdict_accumulator(float)
         self._accumulator = processor.dict_accumulator(acc_dict)
-
-        #the corresponding data sample for tte channel  
-        if self.period == '2018':
-            self.dataHLT = 'EGamma'
-        else:
-            self.dataHLT = 'SingleElectron'
 
     @property
     def accumulator(self):
@@ -51,7 +45,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
         events, out = self.init_process(out, events)
 
         # cut specific for that channel 
-        self.cut_mu_iso = 0.15 # veto events with tight mu isolation for ortogonality in signal region for channels with muon
+        #self.cut_mu_iso = 0.15 # veto events with tight mu isolation for ortogonality in signal region for channels with muon
         self.cut_tau_idVSe = 6 # require tight isolation against electron for channel with reco electron
 
         print('Running main analysis')
@@ -72,7 +66,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
             # Compute Tau_ES for genuineTau
             for Tau_ES_corr in Tau_ES_corr_list:
                 for val_corr in ['up','down']:
-                    Treename = 'Events_GenuineTauES_'+Tau_ES_corr+'_'+val_corr
+                    Treename = 'Events_GenuineTauES_'+Tau_ES_corr+'_'+self.period+'_'+val_corr
                     print('TAU ES corrections: saving '+ Treename)
                     events_corr = self.Lepton_selection(events, Treename)
                     events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2 = self.analyse_tte(events_corr)
@@ -82,7 +76,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
             # Compute Tau_ES for genuineElectron
             for Tau_ES_corr in Tau_ES_corr_list:
                 for val_corr in ['up','down']:
-                    Treename = 'Events_GenuineElectronES_'+Tau_ES_corr+'_'+val_corr
+                    Treename = 'Events_GenuineElectronES_'+Tau_ES_corr+'_'+self.period+'_'+val_corr
                     print('TAU ES corrections: saving '+ Treename)
                     events_corr = self.Lepton_selection(events, Treename)
                     events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2 = self.analyse_tte(events_corr)
@@ -91,8 +85,27 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
 
             # Compute Tau_ES for genuineMuon
             for val_corr in ['up','down']:
-                Treename = 'Events_GenuineMuonES_'+val_corr
+                Treename = 'Events_GenuineMuonES'+'_'+self.period+'_'+val_corr
                 print('TAU ES corrections: saving '+ Treename)
+                events_corr = self.Lepton_selection(events, Treename)
+                events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2 = self.analyse_tte(events_corr)
+                save_file, lst = self.save_anatuple_tte(events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2, self.tag, save_weightcorr=False)
+                save_Event(save_file, lst, Treename)
+
+            # Compute Electron_ES: syst (correlated between the years), gain (uncorrelated between the years)
+            #for electron_ES_corr in ['syst', 'gain']:
+            for val_corr in ['up','down']:
+                Treename = 'Events_ElectronES'+'_'+self.period+'_'+val_corr
+                print('ELE ES corrections: saving '+ Treename)
+                events_corr = self.Lepton_selection(events, Treename)
+                events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2 = self.analyse_tte(events_corr)
+                save_file, lst = self.save_anatuple_tte(events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2, self.tag, save_weightcorr=False)
+                save_Event(save_file, lst, Treename)
+
+            # Compute Electron_ER (correlated between the years)
+            for val_corr in ['up','down']:
+                Treename = 'Events_ElectronER_'+val_corr
+                print('ELE ER corrections: saving '+ Treename)
                 events_corr = self.Lepton_selection(events, Treename)
                 events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2 = self.analyse_tte(events_corr)
                 save_file, lst = self.save_anatuple_tte(events_corr, Sel_Electron, Sel_Tau1, Sel_Tau2, self.tag, save_weightcorr=False)
@@ -110,8 +123,8 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
             out[f'sumw_AtLeast2tau1e'][self.ds] += ak.sum(events_tte.genWeight)
             out[f'n_ev_AtLeast2tau1e'][self.ds] += len(events_tte)
         
-        # veto events with more than one electron with pfRelIso03_all <= 0.15
-        events_tte = events_tte[ IsoElectron_mask(events_tte, 1, iso_cut=0.15)]
+        # veto events with more than one electron with pfRelIso03_all <= 0.4
+        events_tte = events_tte[ IsoElectron_mask(events_tte, 1, iso_cut=0.4)]
 
         if out != None:
             out[f'sumw_NoAdditionalIsoElectron'][self.ds] += ak.sum(events_tte.genWeight)
@@ -176,9 +189,9 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
         # Save bjets candidates
         bjet_candidates(events_tte, Sel_Electron, Sel_Tau1, Sel_Tau2, self.period)
 
-        if len(events_tte) == 0:
-            print('0 events pass selection')
-            return
+        #if len(events_tte) == 0:
+        #    print('0 events pass selection')
+        #    return
 
         # Apply corrections for MC
         if self.mode != 'Data':
@@ -198,7 +211,8 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
         Trigger_eff_corr_e = get_trigger_correction_e(Sel_Electron, events, 'Electron', self.period) 
         sf_L1PreFiring = compute_sf_L1PreFiring(events)
         PU_corr, PU_corr_up, PU_corr_down = get_pileup_correction(events, self.period)
-        events.genWeight = events.genWeight * sf_tau1 * sf_tau2 * sf_e * Trigger_eff_corr_e * sf_L1PreFiring * PU_corr
+        BTag_sf = get_BTag_sf(events, self.period)
+        events.genWeight = events.genWeight * sf_tau1 * sf_tau2 * sf_e * Trigger_eff_corr_e * sf_L1PreFiring * PU_corr * BTag_sf
 
         return events
 
@@ -206,7 +220,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
 
         exclude_list = ['genPartIdx']
         
-        save_file, lst = save_anatuple_common(self.ds, events, tag, 'tte', save_weightcorr)
+        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tte', save_weightcorr)
 
         #info specific to the channel
         lst["nAdditionalElectron"] = np.array(events.nAdditionalElectron)

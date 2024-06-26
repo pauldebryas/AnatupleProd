@@ -2,10 +2,10 @@ import numpy as np
 import awkward as ak
 
 from CoffeaAnalysis.HNLAnalysis.helpers import apply_golden_run, apply_reweight, apply_MET_Filter
-from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_tau_e_corr
+from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_tau_e_corr, compute_electron_ES_corr, compute_electron_ER_corr
 
 class HNLProcessor():
-    def __init__(self, stitched_list, tag, xsecs, periods):
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT):
         #define global variables
         if stitched_list is None or len(stitched_list) == 0:
             raise 'Missing stitched_list in samples_{era}.yaml'
@@ -19,15 +19,18 @@ class HNLProcessor():
 
         self.period = periods
 
-        if self.period == '2018':
+        if self.period in ['2018','2017','2016','2016_HIPM']:
             self.DeepTauVersion = 'DeepTau2018v2p5'
         else:
             self.DeepTauVersion = 'DeepTau2017v2p1'
+        
+        self.dataHLT = dataHLT
     
     # Init process
     def init_process(self, out, events):
 
         ds = events.metadata["dataset"] # dataset name
+            
         print('Processing: ' + ds)
 
         if self.dataHLT in ds:
@@ -67,7 +70,7 @@ class HNLProcessor():
         out['n_ev_reweight'][self.ds] += len(events)
 
         # MET filters
-        events = apply_MET_Filter(events)
+        events = apply_MET_Filter(events, self.period)
 
         # sumw after application of MET filters
         out['sumw_MET_Filter'][self.ds] += ak.sum(events.genWeight)
@@ -83,7 +86,7 @@ class HNLProcessor():
         self.cut_tau_idVSjet = 2 # idDeepTauVSjet >= VVLoose
 
         #muons
-        self.cut_mu_pt = 10. # Muon_pt > cut_mu_pt
+        self.cut_mu_pt = 15. # Muon_pt > cut_mu_pt
         self.cut_mu_eta = 2.4 # abs(Muon_eta) < cut_mu_eta
         self.cut_mu_dz = 0.2 #abs(Muon_dz) < cut_mu_dz
         self.cut_mu_dxy = 0.045 # abs(Muon_dxy) < cut_mu_dxy
@@ -112,7 +115,7 @@ class HNLProcessor():
 
         #electrons
         # cuts in HNLProcessor + mvaNoIso_WP90 > 0 (i.e True)
-        events['SelElectron'] = events.Electron[(events.Electron.pt > self.cut_e_pt) & (np.abs(events.Electron.eta) < self.cut_e_eta) & (np.abs(events.Electron.dz) < self.cut_e_dz) & (np.abs(events.Electron.dxy) < self.cut_e_dxy) & (events.Electron.mvaNoIso_WP90 > 0) & (events.Electron.pfRelIso03_all < self.cut_e_iso)]
+        events['SelElectron'] = events.Electron[(np.abs(events.Electron.eta) < self.cut_e_eta) & (np.abs(events.Electron.dz) < self.cut_e_dz) & (np.abs(events.Electron.dxy) < self.cut_e_dxy) & (events.Electron.mvaNoIso_WP90 > 0) & (events.Electron.pfRelIso03_all < self.cut_e_iso)]
 
         #apply energy correction for Tau:
         if self.mode != 'Data':
@@ -122,36 +125,64 @@ class HNLProcessor():
                 events["SelTau","mass"] = events.SelTau.mass*tau_es
             else:
                 lst = Treename.split('_')
-                if lst[1] == 'GenuineTauES':
-                    mask_genPartFlav = (events.SelTau.genPartFlav == 5)
-                    if lst[2] == 'DM0':
-                        mask = (events.SelTau.decayMode == 0) & mask_genPartFlav
-                    if lst[2] == 'DM1':
-                        mask = (events.SelTau.decayMode == 1) & mask_genPartFlav
-                    if lst[2] == '3prong':
-                        mask = ((events.SelTau.decayMode == 10) | (events.SelTau.decayMode == 11)) & mask_genPartFlav
-                if lst[1] == 'GenuineElectronES':
-                    mask_genPartFlav = (events.SelTau.genPartFlav == 1) | (events.SelTau.genPartFlav == 3)
-                    if lst[2] == 'DM0':
-                        mask = (events.SelTau.decayMode == 0) & mask_genPartFlav
-                    if lst[2] == 'DM1':
-                        mask = (events.SelTau.decayMode == 1) & mask_genPartFlav
-                    if lst[2] == '3prong':
-                        mask = ((events.SelTau.decayMode == 10) | (events.SelTau.decayMode == 11)) & mask_genPartFlav
-                if lst[1] == 'GenuineMuonES':
-                    mask = (events.SelTau.genPartFlav == 2) | (events.SelTau.genPartFlav == 4)
+                if lst[1] in ['GenuineTauES', 'GenuineElectronES', 'GenuineMuonES']:
+                    if lst[1] == 'GenuineTauES':
+                        mask_genPartFlav = (events.SelTau.genPartFlav == 5)
+                        if lst[2] == 'DM0':
+                            mask = (events.SelTau.decayMode == 0) & mask_genPartFlav
+                        if lst[2] == 'DM1':
+                            mask = (events.SelTau.decayMode == 1) & mask_genPartFlav
+                        if lst[2] == '3prong':
+                            mask = ((events.SelTau.decayMode == 10) | (events.SelTau.decayMode == 11)) & mask_genPartFlav
+                    
+                    if lst[1] == 'GenuineElectronES':
+                        mask_genPartFlav = (events.SelTau.genPartFlav == 1) | (events.SelTau.genPartFlav == 3)
+                        if lst[2] == 'DM0':
+                            mask = (events.SelTau.decayMode == 0) & mask_genPartFlav
+                        if lst[2] == 'DM1':
+                            mask = (events.SelTau.decayMode == 1) & mask_genPartFlav
+                        if lst[2] == '3prong':
+                            mask = ((events.SelTau.decayMode == 10) | (events.SelTau.decayMode == 11)) & mask_genPartFlav
+                    
+                    if lst[1] == 'GenuineMuonES':
+                        mask = (events.SelTau.genPartFlav == 2) | (events.SelTau.genPartFlav == 4)
+                    
+                    if lst[-1] == 'up':
+                        sf = ak.where(mask,tau_es_up, tau_es)
+                    if lst[-1] == 'down':
+                        sf = ak.where(mask,tau_es_down, tau_es)
 
-                if lst[-1] == 'up':
-                    sf = ak.where(mask,tau_es_up, tau_es)
-                if lst[-1] == 'down':
-                    sf = ak.where(mask,tau_es_down, tau_es)
-                Delta_met = events.SelTau.pt*sf - events.SelTau.pt*tau_es
-                Delta_met = ak.sum(Delta_met, axis=1)
-                events["SelTau","pt"] = events.SelTau.pt*sf
-                events["SelTau","mass"] = events.SelTau.mass*sf
-                events["MET","pt"] = events.MET.pt - Delta_met
+                    Delta_met = events.SelTau.pt*sf - events.SelTau.pt*tau_es
+                    Delta_met = ak.sum(Delta_met, axis=1)
+                    events["SelTau","pt"] = events.SelTau.pt*sf
+                    events["SelTau","mass"] = events.SelTau.mass*sf
+                    events["MET","pt"] = events.MET.pt - Delta_met
+
+                if lst[1] in ['ElectronES', 'ElectronER']:
+                    if lst[1] == 'ElectronES':
+                        ES_up, ES_down = compute_electron_ES_corr(events.SelElectron)
+                    if lst[1] == 'ElectronER':
+                        ES_up, ES_down = compute_electron_ER_corr(events.SelElectron)
+
+                    events["SelTau","pt"] = events.SelTau.pt*tau_es
+                    events["SelTau","mass"] = events.SelTau.mass*tau_es
+
+                    if lst[-1] == 'up':
+                        Delta_met = events.SelElectron.pt - events.SelElectron.pt * ES_up
+                        Delta_met = ak.sum(Delta_met, axis=1)
+                        events["SelElectron","pt"] = events.SelElectron.pt * ES_up
+                        events["SelElectron","mass"] = events.SelElectron.mass * ES_up
+
+                    if lst[-1] == 'down':
+                        Delta_met = events.SelElectron.pt - events.SelElectron.pt * ES_down
+                        Delta_met = ak.sum(Delta_met, axis=1)
+                        events["SelElectron","pt"] = events.SelElectron.pt * ES_down
+                        events["SelElectron","mass"] = events.SelElectron.mass * ES_down
+                    events["MET","pt"] = events.MET.pt - Delta_met
+
         #apply cut on Tau pt using corrected energy
         events['SelTau'] = events.SelTau[events.SelTau.pt > self.cut_tau_pt]
-        
+        events['SelElectron'] = events.SelElectron[events.SelElectron.pt > self.cut_e_pt]
+
         return events
     

@@ -63,7 +63,7 @@ EGamma_2018A:
   nanoAOD: /EGamma/Run2018A-UL2018_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
 EGamma_2018B:
-  miniAOD: /EGamma/Run2018B-UL2018_MiniAODv2-v1/MINIAOD
+  miniAOD: /EGamma/Run2018B-UL2018_MiniAODv2_GT36-v1/MINIAOD
   nanoAOD: /EGamma/Run2018B-UL2018_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
 EGamma_2018C:
@@ -71,7 +71,7 @@ EGamma_2018C:
   nanoAOD: /EGamma/Run2018C-UL2018_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
 EGamma_2018D:
-  miniAOD: /EGamma/Run2018D-UL2018_MiniAODv2-v2/MINIAOD
+  miniAOD: /EGamma/Run2018D-UL2018_MiniAODv2_GT36-v3/MINIAOD
   nanoAOD: /EGamma/Run2018D-UL2018_MiniAODv2_NanoAODv9-v3/NANOAOD
   sampleType: data
 EWKWMinus2Jets_WToLNu_M-50:
@@ -347,19 +347,19 @@ ST_tW_top_5f_inclusiveDecays:
   nanoAOD: /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
   sampleType: mc
 SingleMuon_2018A:
-  miniAOD: /SingleMuon/Run2018A-UL2018_MiniAODv2_GT36-v1/MINIAOD
+  miniAOD: /SingleMuon/Run2018A-UL2018_MiniAODv2_GT36-v2/MINIAOD
   nanoAOD: /SingleMuon/Run2018A-UL2018_MiniAODv2_NanoAODv9-v2/NANOAOD
   sampleType: data
 SingleMuon_2018B:
-  miniAOD: /SingleMuon/Run2018B-UL2018_MiniAODv2_GT36-v1/MINIAOD
+  miniAOD: /SingleMuon/Run2018B-UL2018_MiniAODv2_GT36-v2/MINIAOD
   nanoAOD: /SingleMuon/Run2018B-UL2018_MiniAODv2_NanoAODv9-v2/NANOAOD
   sampleType: data
 SingleMuon_2018C:
-  miniAOD: /SingleMuon/Run2018C-UL2018_MiniAODv2_GT36-v2/MINIAOD
+  miniAOD: /SingleMuon/Run2018C-UL2018_MiniAODv2_GT36-v3/MINIAOD
   nanoAOD: /SingleMuon/Run2018C-UL2018_MiniAODv2_NanoAODv9-v2/NANOAOD
   sampleType: data
 SingleMuon_2018D:
-  miniAOD: /SingleMuon/Run2018D-UL2018_MiniAODv2_GT36-v1/MINIAOD
+  miniAOD: /SingleMuon/Run2018D-UL2018_MiniAODv2_GT36-v2/MINIAOD
   nanoAOD: /SingleMuon/Run2018D-UL2018_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
 TTTo2L2Nu:
@@ -411,7 +411,7 @@ TTZZ:
   nanoAOD: /TTZZ_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
   sampleType: mc
 Tau_2018A:
-  miniAOD: /Tau/Run2018A-UL2018_MiniAODv2-v1/MINIAOD
+  miniAOD: /Tau/Run2018A-UL2018_MiniAODv2_GT36-v1/MINIAOD
   nanoAOD: /Tau/Run2018A-UL2018_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
 Tau_2018B:
@@ -423,9 +423,7 @@ Tau_2018C:
   nanoAOD: /Tau/Run2018C-UL2018_MiniAODv2_NanoAODv9-v1/NANOAOD
   sampleType: data
 Tau_2018D:
-  miniAOD: /Tau/Run2018D-UL2018_MiniAODv2-v1/MINIAOD
-  miniAOD_ignoreFiles:
-  - /store/data/Run2018D/Tau/MINIAOD/UL2018_MiniAODv2-v1/240000/85725A5B-F5E3-7A44-BDBD-7812E48A9733.root
+  miniAOD: /Tau/Run2018D-UL2018_MiniAODv2_GT36-v1/MINIAOD
   nanoAOD: /Tau/Run2018D-UL2018_MiniAODv2_NanoAODv9-v2/NANOAOD
   sampleType: data
 W1JetsToLNu:

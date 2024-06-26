@@ -11,7 +11,7 @@ from CoffeaAnalysis.stitching.DY.CountEventsDYJets import CountEventsNJetsPtZ
 from CoffeaAnalysis.task_helpers import files_from_path
 
 # parameters ----------------------------------------------------------------------------
-period = '2017'
+period = '2016_HIPM'
 # ---------------------------------------------------------------------------------------
     
 file_dir = f'{os.getenv("CENTRAL_STORAGE_NANOAOD")}/Run2_{period}/'
@@ -160,5 +160,9 @@ for NJets in CountEventsNJetsPtZ.get_NJets_bins():
 json_object = json.dumps(stitching_weights, indent=4)
  
 # Writing to sample.json
-with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/stitching/data/{period}/stitching_weights_2D_DYtoLL.json', "w") as outfile:
+output_results_folder = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/stitching/data/{period}/'
+if not os.path.exists(output_results_folder):
+    os.makedirs(output_results_folder)  
+
+with open(output_results_folder + 'stitching_weights_2D_DYtoLL.json', "w") as outfile:
     outfile.write(json_object)

@@ -1,6 +1,6 @@
 # HNL with tau analysis code
 
-HNL-->3leptons analysis with tau using law workflow.
+HNL-->3leptons analysis with hadronic tau using law workflow.
 
 ##  Requirements
 
@@ -18,7 +18,7 @@ Here is a non-exhaustive list of the packages that I used:
 - matplotlib
 - yaml
 
-For simplicity, you can use the same conda environment as I, which is saved in a .yml file.
+For simplicity, you can use the same conda environment as I, which is saved in a .yml file (located in /config).
 For that:
 - Make sure you have conda/miniconda installed: https://conda.io/projects/conda/en/latest/user-guide/install/index.html
 - Install and activate the environment that I named "HNL" with the command:
@@ -34,11 +34,15 @@ git clone git@github.com:cms-hnl/HNLTauPrompt.git
 cd HNLTauPrompt/
 ```
 
-- Setup the environment (to do at each login)
+- Setup the environment (to do at each login). Make sure you have the correct path to your repository in env.sh
 ```shell
 source env.sh
 ```
-Make sure you have the correct path to your repository in env.sh
+
+- Create a proxy to setup your access to DAS
+```shell
+voms-proxy-init -voms cms -rfc -valid 192:00
+```
 
 Then you can use law to monitor and run the different tasks
 
@@ -49,43 +53,40 @@ Then you can use law to monitor and run the different tasks
 law index --verbose
 ```
 
-Tasks can be interdependent. To not mix up jobs, specify the same "version" parameter for all the tasks (here we use "v1").
-For now, we used only 2018 samples.
-
 - You can print task dependencies with
 ```shell
-law run name_of_the_task --version v1 --periods 2018 --print-deps -1
+law run name_of_the_task --parameters1 param1 --parameters1 param2 ... --print-deps -1
 ```
 
 - You can print task status of the task with
 ```shell
-law run name_of_the_task --version v1 --periods 2018 --print-status -1
+law run name_of_the_task --parameters1 param1 --parameters1 param2 ... --print-status -1
 ```
 
-- Run task locally and the ones required by that task (useful for debugging)
+- Run task locally (useful for debugging). If the task have multiple branches you can use:
 ```shell
-law run name_of_the_task --version v1 --periods 2018 --name_of_the_task-workflow local
+law run name_of_the_task --parameters1 param1 --parameters1 param2 ... --name_of_the_task-workflow local --branch index_of_the_branch
 ```
 
 - Run task with HTcondor
 ```shell
-law run name_of_the_task --version v1 --periods 2018
+law run name_of_the_task --parameters1 param1 --parameters1 param2 ...
 ```
 
 - If you want to limit the number of jobs running simultaneously (EOS space management for skimed nanoAOD samples)
 ```shell
-law run name_of_the_task --version v1 --periods 2018 --CreateNanoSkims-parallel-jobs 100
+law run name_of_the_task --parameters1 param1 --parameters1 param2 ... --CreateNanoSkims-parallel-jobs 100
 ```
 
 ### Tasks
 
 - CreateVomsProxy: creates a new proxy in order to access DAS: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideVomsFAQ
-- CreateDatasetInfos: creates json files in which are stored all the dataset info (size, nevents, DAS path for each files) specified in config/samples_{period}.yaml input file
-- CreateNanoSkims: creates skimmed root files by batch (limited by max_size_limit param) for each dataset, using json files info previously produced.
-- CoffeaAnalysis: analyse HNL signal, background and data using Coffea (Columnar Object Framework For Effective Analysis). This task require additional argument --tag which will be the name of the folder where we store the results. 
-The results are stored in two type of pickle files (in CoffeaAnalysis/results/):
-    - counter.pkl which save the original sumw (before skimming) of MC samples (backgrounds and HNL signal)
-    - result_{...}.pkl which save the histograms and sumw/nevent after each cut for each channel/region (ABCD method for QCD estimation).
+- CreateSamplesConfigFile: Create yaml file with the sample list that have been processed for a specific year. Output is in config/samples_{period}.yaml.
+- RunCounter: save in a .pkl file for each year the original sum weights of the events (selected and not selected) in each samples. Needed for the Analysis task.
+- Analysis: skim HNL signal, background and data using Coffea (Columnar Object Framework For Effective Analysis). This task require additional argument --tag which will be the name of the folder where we store the results. 
+The results are stored in two type of files (in CoffeaAnalysis/results/):
+    - .pkl which save the sumw of the events through the cutflow 
+    - .root which save the remaining events after all the cut with needed info for the events and the selected objects.
 
 ### Helpers to monitor results
 
