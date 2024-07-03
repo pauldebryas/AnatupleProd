@@ -6,4 +6,3 @@ __init__.py
 *.html
 /tmp*
 test.py
-/BTagSF*

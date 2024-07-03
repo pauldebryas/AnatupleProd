@@ -343,6 +343,10 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
         + matching Jet and GenJet information 
         name: name of the branch in the rootfile
     '''
+    if mode != 'Data':
+        GenTauMatch = events.GenPart[ak.Array([[i] for i in Sel_Tau['genPartIdx']])]
+        Sel_Tau['isPrompt'] = np.array(ak.flatten((GenTauMatch.hasFlags(['isPrompt']))))
+        Sel_Tau['isDirectPromptTauDecayProduct'] = np.array(ak.flatten((GenTauMatch.hasFlags(['isDirectPromptTauDecayProduct']))))
     #save Tau info
     lst = save_anatuple_lepton(Sel_Tau, lst, exclude_list, name)
 
