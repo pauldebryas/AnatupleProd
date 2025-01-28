@@ -1,7 +1,7 @@
 /.law
 __pycache__
-data/*
-!.gitignore
+**/data/
+!**/data/.gitignore
 figures/*
 .DS_Store
 __init__.py
