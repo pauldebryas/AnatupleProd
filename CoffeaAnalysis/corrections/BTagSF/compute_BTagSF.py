@@ -57,19 +57,19 @@ cset = get_correction_central(period)
 #loose WP value
 deepJet_wp_value = cset["deepJet_wp_values"].evaluate("L")
 
-output_results_folder = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/{period}/') 
+output_results_folder = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/btagEff_root/{period}/') 
 if not os.path.exists(output_results_folder):
     os.makedirs(output_results_folder)     
 
 output_results_file = os.path.join(output_results_folder, f'btagEff_{channel}_{Jet_flavor}.root')
 
-output_json_path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/corr_schema/{period}/') 
+output_json_path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/btagEff_json/{period}/') 
 if not os.path.exists(output_json_path):
     os.makedirs(output_json_path)     
 
 output_json_file = os.path.join(output_json_path, f'btagEff_{channel}_{Jet_flavor}.json')
 
-output_figures_path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/figures/{period}/Jet_flavor_{Jet_flavor}/')
+output_figures_path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/figures/{period}/Jet_flavor_{Jet_flavor}/btagEff/')
 if not os.path.exists(output_figures_path):
     os.makedirs(output_figures_path)    
 

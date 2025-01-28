@@ -10,7 +10,7 @@ year = '2016_HIPM'
 #----------------------------------------------------
 
 # produce dir if doesn't exist called run_Data_{year}
-output_folder = os.path.join(os.getenv("ANALYSIS_PATH"), 'CoffeaAnalysis', 'luminosity', f'run_Data_{year}')
+output_folder = os.path.join(os.getenv("ANALYSIS_PATH"), 'CoffeaAnalysis', 'luminosity', 'data', 'run_Data',f'{year}')
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
@@ -44,7 +44,7 @@ for data_name in sorted(data_nanoAOD.keys()):
     # save in csv file run_{key}.csv
     print(f'Writing run_{data_name}.csv')
     #print(run_number)
-    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/run_Data_{year}/run_{data_name}.csv', "w", newline="") as csvfile:
+    with open(os.path.join(output_folder, f'run_{data_name}.csv'), "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
         # first line #Request on DAQ: f'run dataset={nanoAOD}'
         writer.writerow([f"#Request on DAQ: 'run dataset={data_nanoAOD[data_name]}'"])

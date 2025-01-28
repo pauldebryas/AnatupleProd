@@ -16,23 +16,8 @@ action() {
     export CENTRAL_STORAGE_NANOAOD="/eos/user/c/cms2020/HNL"
 
     export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
-    #source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_101 x86_64-centos7-gcc8-opt
-
-    PRIVATE_CONDA_INSTALL=/afs/cern.ch/work/p/pdebryas/miniconda3
-    __conda_setup="$($PRIVATE_CONDA_INSTALL/bin/conda shell.${SHELL##*/} hook)"
-    if [ $? -eq 0 ]; then
-        eval "$__conda_setup"
-    else
-        if [ -f "$PRIVATE_CONDA_INSTALL/etc/profile.d/conda.sh" ]; then
-            . "$PRIVATE_CONDA_INSTALL/etc/profile.d/conda.sh"
-        else
-            export PATH="$PRIVATE_CONDA_INSTALL/bin:$PATH"
-        fi
-    fi
-    unset __conda_setup
-
-    conda activate HNL
-
+    
+    source /afs/cern.ch/work/p/pdebryas/AnalEnv/bin/activate
     source "$( law completion )" ""
 }
 action

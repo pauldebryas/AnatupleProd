@@ -1,8 +1,11 @@
 /.law
-/data*
 __pycache__
+data/*
+!.gitignore
+figures/*
 .DS_Store
 __init__.py
 *.html
-/tmp*
+test_condor/*
+tmp/*
 test.py

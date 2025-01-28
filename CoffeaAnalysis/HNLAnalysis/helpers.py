@@ -77,7 +77,7 @@ def data_goodrun_lumi(ds, era):
 
         return a 2D array with the good runs and their corresponding luminosity
     '''
-    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/Run2_{era}_lumi.csv', newline='') as csvfile:
+    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/data/goldenrunAndLumi/Run2_{era}_lumi.csv', newline='') as csvfile:
         csv_reader = csv.reader(filter(lambda row: row[0]!='#', csvfile))
         run_goodrun = list(csv_reader)
 
@@ -89,7 +89,7 @@ def data_goodrun_lumi(ds, era):
 
     #then found the run in the data file (stored in run_Data_ds.csv file)
     run_data = []
-    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/run_Data_'+era+'/run_'+ds+'.csv', newline='') as csvfile:
+    with open(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/luminosity/data/run_Data/'+era+'/run_'+ds+'.csv', newline='') as csvfile:
         csv_reader = csv.reader(filter(lambda row: row[0]!='#', csvfile))
         run_data.append(list(csv_reader))
     run_data = np.concatenate(run_data).astype(float)
@@ -127,7 +127,7 @@ def compute_reweight(HLT, xsec, event_nb, period):
     for area in all_area_period[period]:
         Data_sample = f'{HLT}_{period}{area}'
         luminosity += compute_lumi(Data_sample, period)
-    print(f'computed luminosity: {luminosity}')
+    #print(f'computed luminosity: {luminosity}')
 
     return luminosity*xsec/event_nb
 
@@ -135,6 +135,7 @@ def apply_MET_Filter(events, period):
     ''' MET filter folowing https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#2018_2017_data_and_MC_UL
     '''
     if period in ['2018','2017']:
+        
         events = events[events.Flag.goodVertices & 
                         events.Flag.globalSuperTightHalo2016Filter & 
                         events.Flag.HBHENoiseFilter & 
@@ -218,22 +219,29 @@ def delta_r(v1, v2):
     return np.sqrt(delta_r2(v1, v2))
 
 def bjet_candidates(events, Lepton1, Lepton2, Lepton3, period, delta_r_cut = 0.5):
-    ''' Return bjet (btagDeepFlavB > LooseWP) with pt > 20, |eta| < 2.5, jetId >= 4 which do no not match selected lepton
+    ''' Return bjet (btagDeepFlavB > LooseWP) with pt > 20, |eta| < 2.5, jetId >= 2 i.e pass tight or tightLepVeto ID +  do no not match selected lepton
     '''
     # btag wp
     cset = get_correction_central('btag', period)
     #loose WP value
     deepJet_wp_value = cset["deepJet_wp_values"].evaluate("L")
+    
+    jets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.eta > -2.5) & (events.Jet.jetId >= 2)]
+    drcut_jetslep1 = delta_r(Lepton1,jets_candidates) > delta_r_cut
+    drcut_jetslep2 = delta_r(Lepton2,jets_candidates) > delta_r_cut
+    drcut_jetslep3 = delta_r(Lepton3,jets_candidates) > delta_r_cut
 
-    bjets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.eta > -2.5) & (events.Jet.jetId >= 4)]
-    drcut_jetslep1 = delta_r(Lepton1,bjets_candidates) > delta_r_cut
-    drcut_jetslep2 = delta_r(Lepton2,bjets_candidates) > delta_r_cut
-    drcut_jetslep3 = delta_r(Lepton3,bjets_candidates) > delta_r_cut
-
-    bjets_candidates = bjets_candidates[drcut_jetslep1 & drcut_jetslep2 & drcut_jetslep3]
+    # save also info of nbjets when we remove the dR condition with Taus 
+    if ('rawDeepTau2017v2p1VSe' in Lepton2.fields) & ('rawDeepTau2017v2p1VSe' in Lepton3.fields):
+        bjets_candidates_withoutdRTau = jets_candidates[drcut_jetslep1]
+    if ('rawDeepTau2017v2p1VSe' not in Lepton2.fields)  & ('rawDeepTau2017v2p1VSe' in Lepton3.fields) :
+        bjets_candidates_withoutdRTau = jets_candidates[drcut_jetslep1 & drcut_jetslep2]
+    
+    bjets_candidates = jets_candidates[drcut_jetslep1 & drcut_jetslep2 & drcut_jetslep3]
 
     #save bjets in events
     events['nbjetsLoose'] = ak.num(bjets_candidates[bjets_candidates.btagDeepFlavB > deepJet_wp_value])
+    events['nbjetsLooseWithoutdRTau'] = ak.num(bjets_candidates_withoutdRTau[bjets_candidates_withoutdRTau.btagDeepFlavB > deepJet_wp_value])
     events['bjets'] = bjets_candidates
 
     return 
@@ -247,7 +255,8 @@ def bjet_info(events):
         "phi": ak.Array(ak.to_list(events.bjets['phi'])),
         "hadronFlavour": ak.Array(ak.to_list(events.bjets['hadronFlavour'])),
         "btagDeepFlavB": ak.Array(ak.to_list(events.bjets['btagDeepFlavB'])),
-        "mass": ak.Array(ak.to_list(events.bjets['mass']))
+        "mass": ak.Array(ak.to_list(events.bjets['mass'])),
+        "vetomap": ak.Array(ak.to_list(events.bjets['vetomap']))
     })
         
     return bjet_compress
@@ -255,6 +264,9 @@ def bjet_info(events):
 def save_bjets(save_file, events):
     ''' Save in a root file bjets info in "bjets" Tree
     '''
+    if len(events) == 0:
+        return
+    
     # Split the original string based on the delimiter
     parts = save_file.split("_anatuple_")
     parts[1] = parts[1][:-5]
@@ -297,7 +309,8 @@ def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
             "run": np.array(events.run),
             "MET_pt": np.array(events.MET['pt']),
             "MET_phi": np.array(events.MET['phi']),
-            "nbjetsLoose": np.array(events.nbjetsLoose)
+            "nbjetsLoose": np.array(events.nbjetsLoose),
+            "nbjetsLooseWithoutdRTau": np.array(events.nbjetsLooseWithoutdRTau)
         }
 
     if save_weightcorr == True:
@@ -343,10 +356,13 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
         + matching Jet and GenJet information 
         name: name of the branch in the rootfile
     '''
+    if len(Sel_Tau) == 0:
+        return lst
+    
     if mode != 'Data':
         GenTauMatch = events.GenPart[ak.Array([[i] for i in Sel_Tau['genPartIdx']])]
-        Sel_Tau['isPrompt'] = np.array(ak.flatten((GenTauMatch.hasFlags(['isPrompt']))))
-        Sel_Tau['isDirectPromptTauDecayProduct'] = np.array(ak.flatten((GenTauMatch.hasFlags(['isDirectPromptTauDecayProduct']))))
+        Sel_Tau['isPrompt'] = np.array(ak.flatten((GenTauMatch.statusFlags & (1 << 0)) != 0)) #isPrompt
+        Sel_Tau['isDirectPromptTauDecayProduct'] = np.array(ak.flatten((GenTauMatch.statusFlags & (1 << 5)) != 0)) #isDirectPromptTauDecayProduct
     #save Tau info
     lst = save_anatuple_lepton(Sel_Tau, lst, exclude_list, name)
 
@@ -540,3 +556,94 @@ def Trigger_Electron_sel(events, period):
     Sel_Electron = Sel_Electron[:,0]
 
     return events, Sel_Electron
+
+def invariant_mass(lep1, lep2):
+    """
+    Calculate the invariant mass of two leptons.
+    Parameters:
+        lep1, lep2: awkward arrays with px, py, pz, and energy components.
+    Returns:
+        Invariant mass array.
+    """
+    return np.sqrt(2*lep1.pt*lep2.pt*(np.cosh(lep1.eta-lep2.eta) - np.cos(lep1.phi-lep2.phi)))
+
+def ll_from_Z_sel(events):
+    """
+    Filters events with two leptons (muons or electrons) satisfying:
+        - Invariant mass of 91.2 ± 15 GeV
+        - Opposite charges
+    Selects the pair with invariant mass closest to the Z mass (91.2 GeV).
+    
+    Parameters:
+        events: awkward array of NanoEvent objects.
+    Returns:
+        Tuple (events, lepton1, lepton2) where lepton1 and lepton2 
+        are the filtered lepton collections.
+    """
+    # Define lepton collections
+    muons = events.SelMuon
+    electrons = events.SelElectron
+
+    # Combine all potential pairs of muons
+    muon_pairs = ak.combinations(muons, 2, fields=["lep1", "lep2"])
+    electron_pairs = ak.combinations(electrons, 2, fields=["lep1", "lep2"])
+
+    # Filter pairs for opposite sign and invariant mass criteria
+    def filter_pairs(pairs):
+        opp_sign = pairs.lep1.charge * pairs.lep2.charge < 0
+        inv_mass = invariant_mass(pairs.lep1, pairs.lep2)
+        z_mass_window = (inv_mass > 76.2) & (inv_mass < 106.2)
+        pairs = pairs[opp_sign & z_mass_window]
+        #pairs["inv_mass"] = inv_mass  # Add invariant mass for sorting later
+        return pairs
+    
+    valid_muon_pairs = filter_pairs(muon_pairs)
+    valid_electron_pairs = filter_pairs(electron_pairs)
+
+    # Combine valid pairs
+    valid_pairs = ak.concatenate([valid_muon_pairs, valid_electron_pairs], axis=-1)
+
+    # Select the events with valid pairs
+    cut = ak.num(valid_pairs) > 0
+    events_with_valid_pairs = events[cut]
+
+    # For each event, select the pair with invariant mass closest to 91.2 GeV
+    def closest_to_z_mass(pairs):
+        z_mass = 91.2
+        inv_mass = invariant_mass(pairs.lep1, pairs.lep2)
+        delta_mass = abs(inv_mass - z_mass)
+        best_pair_idx = ak.argmin(delta_mass, axis=1)
+        return pairs[best_pair_idx]
+
+    closest_pairs = closest_to_z_mass(valid_pairs[cut])
+
+    lepton1 = closest_pairs.lep1[:,0]
+    lepton2 = closest_pairs.lep2[:,0]
+
+    return events_with_valid_pairs, lepton1, lepton2
+
+def FinalLL_sel(events, Sel_Lepton1, Sel_Lepton2, lepton_type, delta_r_cut = 0.5):
+    ''' Select Light Lepton candidate with dr(Sel_Lepton1,Lepton)>0.5 and dr(Sel_Lepton2,Lepton)>0.5 
+        We take the one with the one with min isolation in case of ambiguity
+    '''
+
+    # Define lepton collections
+    if lepton_type == 'muon':
+        leptons = events.SelMuon
+    if lepton_type == 'electron':
+        leptons = events.SelElectron
+
+    LL_canditates = leptons[(delta_r(Sel_Lepton1, leptons) > delta_r_cut) & (delta_r(Sel_Lepton2,leptons)> delta_r_cut)]
+
+    #make sure at least 1 satisfy this condition
+    cut = ak.num(LL_canditates) >= 1
+    events = events[cut]
+    Sel_Lepton1 = Sel_Lepton1[cut]
+    Sel_Lepton2 = Sel_Lepton2[cut]
+    LL_canditates = LL_canditates[cut]
+
+    Sel_LL = LL_canditates[ak.min(LL_canditates.pfRelIso03_all, axis=-1) == LL_canditates.pfRelIso03_all]
+
+    Sel_LL = Sel_LL[:,0]
+
+    return events, Sel_Lepton1, Sel_Lepton2, Sel_LL

@@ -19,10 +19,10 @@ python CoffeaAnalysis/luminosity/produce_run_Data.py
 law run RunCounter --periods 2018
 ```
 
-- corrections: add err histograms for the RECO and Trigger, needed to compute electron SFs variation.
+- corrections: add err histograms for the RECO and Trigger of electron, needed to compute electron SFs variation.
 ```shell
-python CoffeaAnalysis/corrections/Add_err_hist_RECOSF.py
-python CoffeaAnalysis/corrections/Add_err_hist_triggerSF.py
+python CoffeaAnalysis/corrections/electron/Add_err_hist_RECOSF.py
+python CoffeaAnalysis/corrections/electron/Add_err_hist_triggerSF.py
 ```
 
 - BTAG SFs. Save the root files and convert to json correction schema
@@ -73,4 +73,9 @@ law run Analysis --periods 2018 --tag TAG --channel ttm --Analysis-workflow loca
 - Run all branches with HTcondor
 ```shell
 law run Analysis --periods 2018 --tag TAG --channel ttm
+```
+
+- Run a single branch locally with only 100 events (useful for debugging)
+```shell
+law run Analysis --periods 2018 --tag TAG --channel ttm --debugMode --Analysis-workflow local --branch 41
 ```

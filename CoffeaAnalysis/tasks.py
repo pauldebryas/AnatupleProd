@@ -4,17 +4,21 @@ import luigi
 import os
 import importlib
 import shutil
+import warnings
+import random
 
-from coffea import processor
+#from coffea import dataset_tools
 from coffea.nanoevents import NanoAODSchema
 NanoAODSchema.warn_missing_crossrefs = False
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from CoffeaAnalysis.HNLAnalysis.CountEvents import CountEvents
 from CoffeaAnalysis.task_helpers import files_from_path, cleanup_ds
 from run_tools.law_customizations import Task, HTCondorWorkflow
-
+from coffea import processor
 
 class RunCounter(Task, HTCondorWorkflow, law.LocalWorkflow):
+    debugMode = luigi.BoolParameter(default=False)
 
     def create_branch_map(self):
         path_to_file = os.path.join(self.output_anatuple() ,'counter.pkl')
@@ -60,6 +64,9 @@ class RunCounter(Task, HTCondorWorkflow, law.LocalWorkflow):
         samples_list = self.load_MCsamples()
         Backgrounds_stitched = self.load_StitchedSamples()
 
+        if self.debugMode:
+            samples_list = random.sample(list(samples_list), 5)
+
         event_counter_NotSelected = processor.run_uproot_job(
             samples_list,
             'EventsNotSelected',
@@ -90,6 +97,7 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
 
     tag = luigi.Parameter(default='TEST')
     channel = luigi.Parameter(default='ttm')
+    debugMode = luigi.BoolParameter(default=False)
 
     # requires RunCounter for scaling
     def workflow_requires(self):
@@ -146,12 +154,12 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
     
     def load_dataHLT(self):
         #adding data to the branches
-        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte','tte_DiTau']:
+        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte','tte_DiTau', 'QCDe', 'QCDmu', 'Zmu']:
             raise RuntimeError(f"Incorrect channel name: {self.channel}")
 
-        if self.channel in ['ttm','tmm','tem']:
+        if self.channel in ['ttm','tmm','tem', 'QCDmu', 'Zmu']:
             self.dataHLT='SingleMuon'
-        if self.channel in ['tee', 'tte']:
+        if self.channel in ['tee', 'tte','QCDe']:
             if self.periods == '2018':
                 self.dataHLT='EGamma'
             else:
@@ -182,7 +190,6 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
         return self.local_analysis_target(output_file)
 
     def run(self):
-        #self.load_sample_configs()
         self.load_dataHLT()
         sample_name, xsecs, sampleType, files, output_file = self.branch_data
 
@@ -214,13 +221,14 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
         if stitched_list is None or len(stitched_list) == 0:
             raise RuntimeError(f"Missing stitched_list in samples_{self.periods}.yaml")
 
-        module = importlib.import_module(f'CoffeaAnalysis.HNLAnalysis.HNLAnalysis_{self.channel}')
+        module = importlib.import_module(f'CoffeaAnalysis.HNLAnalysis.channels.HNLAnalysis_{self.channel}')
         HNLAnalysis = getattr(module, f'HNLAnalysis_{self.channel}')
+        my_processor = HNLAnalysis(stitched_list, self.tag, xsecs, self.periods, self.dataHLT, self.debugMode)
 
         result = processor.run_uproot_job(
             samples_list,
             "Events",
-            HNLAnalysis(stitched_list, self.tag, xsecs, self.periods, self.dataHLT),
+            my_processor,
             processor.iterative_executor,
             {"schema": NanoAODSchema, 'workers': 6},
         )

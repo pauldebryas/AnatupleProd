@@ -15,8 +15,8 @@ flavors = [0,4,5]
 
 for flavor in flavors:
     print(f'For flavor {str(flavor)}')
-    path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/corr_schema/{period}/')
-    path_figure = os.path.join(os.getenv("ANALYSIS_PATH"), f'CoffeaAnalysis/corrections/BTagSF/figures/{period}/Jet_flavor_{str(flavor)}/diff/')
+    path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/btagEff_json/{period}/')
+    path_figure = os.path.join(os.getenv("ANALYSIS_PATH"), f'CoffeaAnalysis/corrections/BTagSF/figures/{period}/Jet_flavor_{str(flavor)}/diff_MeanVSchannel/')
     if not os.path.exists(path_figure):
         os.makedirs(path_figure)
 
@@ -101,7 +101,7 @@ for flavor in flavors:
     BTagEff_corr_err.data.flow = "clamp"
 
     # Save CorrectionSet to a JSON file
-    output = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/corr_schema/{period}/btagEff_{str(flavor)}.json')
-    output_err =  os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/corr_schema/{period}/btagEff_{str(flavor)}_err.json')
+    output = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/btagEff_json/{period}/btagEff_{str(flavor)}.json')
+    output_err =  os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/btagEff_json/{period}/btagEff_{str(flavor)}_err.json')
     save_hist_schemav2(BTagEff_corr, "Jet BTag efficiency (Loose WP)", output)
     save_hist_schemav2(BTagEff_corr_err, "Jet BTag efficiency error (Loose WP)", output_err)

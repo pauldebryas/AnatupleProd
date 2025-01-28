@@ -4,6 +4,7 @@ from coffea.lookup_tools import extractor
 import os
 import numpy as np
 from coffea.lookup_tools.correctionlib_wrapper import correctionlib_wrapper
+from coffea.jetmet_tools import JECStack, CorrectedJetsFactory, CorrectedMETFactory
 
 #global parameters
 Area_dir = {
@@ -43,12 +44,11 @@ def get_correction_central(corr, period):
     return ceval
 
 def compute_sf_tau(Sel_Tau, events, name, period, DeepTauVersion):
-    # sf for genuine tau (https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2)
+    # sf for tau (https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun2)
     if DeepTauVersion == "DeepTau2018v2p5":
         #load correction from custom json
-        f_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/{period}/tau/tau_DeepTau2018v2p5_UL{Area_ref[period]}.json'
+        f_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/tau/data/{period}/tau_DeepTau2018v2p5_UL{Area_ref[period]}.json'
         ceval = correctionlib.CorrectionSet.from_file(f_path)
-        #print(list(ceval.keys())) --> ['DeepTau2018v2p5VSe', 'DeepTau2018v2p5VSjet', 'DeepTau2018v2p5VSmu', 'tau_energy_scale', 'tau_trigger']
     if DeepTauVersion == "DeepTau2017v2p1":
         #load correction from central repo
         ceval = get_correction_central('tau', period)
@@ -60,49 +60,32 @@ def compute_sf_tau(Sel_Tau, events, name, period, DeepTauVersion):
     #Corrections to be applied to genuine Taus
     sf_VsJet = weightcorr_TauID_genuineTau(events, Sel_Tau, name, ceval, period, DeepTauVersion)
     tau_sf = sf_Vse*sf_Vsmu*sf_VsJet
+    events[f'weightcorr_{name}_TauID_Total_Central'] = tau_sf
     return tau_sf
-
-def compute_sf_e(Sel_Electron, events, name, period):
-    # sf for electrons (https://twiki.cern.ch/twiki/bin/view/CMS/EgammaUL2016To2018)
-     #RECO sf for e
-    RECOsf_Below20, RECOsf_Below20_Up, RECOsf_Below20_Down = get_electronRECOsf_Below20(events, Sel_Electron, name, period)
-    RECOsf_Above20, RECOsf_Above20_Up, RECOsf_Above20_Down = get_electronRECOsf_Above20(events, Sel_Electron, name, period)
-    #combine SFs
-    RECO_sf = ak.concatenate([ak.unflatten(RECOsf_Above20, (Sel_Electron.pt >= 20)*1), ak.unflatten(RECOsf_Below20, (Sel_Electron.pt < 20)*1)], axis=1)
-    RECO_sf_Up = ak.concatenate([ak.unflatten(RECOsf_Above20_Up, (Sel_Electron.pt >= 20)*1), ak.unflatten(RECOsf_Below20_Up, (Sel_Electron.pt < 20)*1)], axis=1)
-    RECO_sf_Down = ak.concatenate([ak.unflatten(RECOsf_Above20_Down, (Sel_Electron.pt >= 20)*1), ak.unflatten(RECOsf_Below20_Down, (Sel_Electron.pt < 20)*1)], axis=1)
-    events[f'weightcorr_{name}_EleID_RECO_Up_rel'] = ak.flatten(RECO_sf_Up / RECO_sf)
-    events[f'weightcorr_{name}_EleID_RECO_Down_rel'] = ak.flatten(RECO_sf_Down / RECO_sf)
-
-    #ID sf for e
-    ceval = get_correction_central('electron', period)
-    ID_sf = ceval['UL-Electron-ID-SF'].evaluate(Area_dir[period][:-3], 'sf', 'wp90noiso', ak.to_numpy(Sel_Electron.eta), ak.to_numpy(Sel_Electron.pt))
-    events[f'weightcorr_{name}_EleID_wp90noiso_Up_rel'] = ceval['UL-Electron-ID-SF'].evaluate(Area_dir[period][:-3], 'sfup', 'wp90noiso', ak.to_numpy(Sel_Electron.eta), ak.to_numpy(Sel_Electron.pt)) / ID_sf
-    events[f'weightcorr_{name}_EleID_wp90noiso_Down_rel'] = ceval['UL-Electron-ID-SF'].evaluate(Area_dir[period][:-3], 'sfdown', 'wp90noiso', ak.to_numpy(Sel_Electron.eta), ak.to_numpy(Sel_Electron.pt)) / ID_sf
-
-    events[f'weightcorr_{name}_EleID_Total_Central'] = ID_sf * ak.flatten(RECO_sf)
-    return ID_sf * ak.flatten(RECO_sf)
 
 def compute_sf_mu(Sel_Muon, events, name, period):
     # sf for muon (https://twiki.cern.ch/twiki/bin/view/CMS/MuonUL2018)
     ceval = get_correction_central('muon', period)
+    #Corrections due to RECO efficiencies
+    sf_RECO = weightcorr_MuID_RECO(events, Sel_Muon, name, ceval, period)
+    #Corrections due to ID efficiencies
+    sf_ID = weightcorr_MuID_MediumID(events, Sel_Muon, name, ceval, period)
+    #Corrections due to ISO efficiencies
+    sf_ISO = weightcorr_MuID_LooseISO(events, Sel_Muon, name, ceval, period)
+    mu_sf = sf_RECO*sf_ID*sf_ISO
+    events[f'weightcorr_{name}_MuID_Total_Central'] = mu_sf
+    return mu_sf
 
-    #sf_Below20, sf_Below20_Up, sf_Below20_Down = get_muonsf_Below20(events, Sel_Muon, name, ceval, period)
-    #sf_Between20and120, sf_Between20and120_Up, sf_Between20and120_Down = get_muonsf_Between20and120(events, Sel_Muon, name, ceval, period)
-    sf_Between15and120 = get_muonsf_Between15and120(events, Sel_Muon, name, ceval, period)
-    #sf_Above120, sf_Above120_Up, sf_Above120_Down = get_muonsf_Above120(events, Sel_Muon, name, ceval, period)
-    sf_Above120 = get_muonsf_Above120(events, Sel_Muon, name, ceval, period)
-
-    #combine SFs
-    sf_mu = ak.concatenate([ak.unflatten(sf_Between15and120, ((Sel_Muon.pt > 15) & (Sel_Muon.pt <= 120))*1), 
-                            ak.unflatten(sf_Above120,        (Sel_Muon.pt > 120)*1)
-                            ], axis=1) #, ak.unflatten(sf_Below20, (Sel_Muon.pt <= 20)*1)
-    #sf_mu_Up = ak.concatenate([ak.unflatten(sf_Between20and120_Up, ((Sel_Muon.pt > 20) & (Sel_Muon.pt <= 120))*1), ak.unflatten(sf_Above120_Up, (Sel_Muon.pt > 120)*1), ak.unflatten(sf_Below20_Up, (Sel_Muon.pt <= 20)*1)], axis=1)
-    #sf_mu_Down = ak.concatenate([ak.unflatten(sf_Between20and120_Down, ((Sel_Muon.pt > 20) & (Sel_Muon.pt <= 120))*1), ak.unflatten(sf_Above120_Down, (Sel_Muon.pt > 120)*1), ak.unflatten(sf_Below20_Down, (Sel_Muon.pt <= 20)*1)], axis=1)
-    events[f'weightcorr_{name}_MuID_Total_Central'] = sf_mu
-    #events[f'weightcorr_{name}_MuID_Total_Up'] =sf_mu_Up
-    #events[f'weightcorr_{name}_MuID_Total_Down'] =sf_mu_Down
-    return ak.flatten(sf_mu)
+def compute_sf_e(Sel_Electron, events, name, period):
+    # sf for electrons (https://twiki.cern.ch/twiki/bin/view/CMS/EgammaUL2016To2018)
+    ceval = get_correction_central('electron', period)
+    #Corrections due to RECO efficiencies
+    sf_RECO = weightcorr_EleID_RECO(events, Sel_Electron, name, period)
+    #Corrections due to ID efficiencies
+    sf_ID = weightcorr_EleID_wp90noiso(events, Sel_Electron, name, ceval, period)
+    e_sf = sf_RECO*sf_ID
+    events[f'weightcorr_{name}_EleID_Total_Central'] = e_sf
+    return e_sf
 
 def get_trigger_correction_mu(Sel_Muon, events, name, period):
     HLT_name = {
@@ -111,19 +94,19 @@ def get_trigger_correction_mu(Sel_Muon, events, name, period):
         '2016_HIPM': 'NUM_IsoMu24_or_IsoTkMu24_DEN_CutBasedIdTight_and_PFIsoTight',
         '2016': 'NUM_IsoMu24_or_IsoTkMu24_DEN_CutBasedIdTight_and_PFIsoTight',
     }
+    ev_pt = (Sel_Muon.pt)
     if period == '2017': #IsoMu27
-        ev_pt = ak.to_numpy(Sel_Muon.pt)
         ev_pt = np.where(ev_pt<29, 29, ev_pt)
     else: #IsoMu24
-        ev_pt = ak.to_numpy(Sel_Muon.pt)
         ev_pt = np.where(ev_pt<26, 26, ev_pt)
+
     ceval = get_correction_central('muon', period)
-    TrgSF = ceval[HLT_name[period]].evaluate(ak.to_numpy(abs(Sel_Muon.eta)), ak.to_numpy(ev_pt), "nominal")
+    TrgSF = ceval[HLT_name[period]].evaluate(np.abs(Sel_Muon.eta), ev_pt, "nominal")
     events[f'weightcorr_{name}_TrgSF_singleMu_Total_Central'] = TrgSF
-    events[f'weightcorr_{name}_TrgSF_singleMu_syst_Up_rel'] =    (TrgSF + ceval[HLT_name[period]].evaluate(ak.to_numpy(abs(Sel_Muon.eta)), ak.to_numpy(ev_pt), "syst"))/TrgSF
-    events[f'weightcorr_{name}_TrgSF_singleMu_syst_Down_rel'] =  (TrgSF - ceval[HLT_name[period]].evaluate(ak.to_numpy(abs(Sel_Muon.eta)), ak.to_numpy(ev_pt), "syst"))/TrgSF
-    events[f'weightcorr_{name}_TrgSF_singleMu_stat_{period}_Up_rel'] =    (TrgSF + ceval[HLT_name[period]].evaluate(ak.to_numpy(abs(Sel_Muon.eta)), ak.to_numpy(ev_pt), "stat"))/TrgSF
-    events[f'weightcorr_{name}_TrgSF_singleMu_stat_{period}_Down_rel'] =  (TrgSF - ceval[HLT_name[period]].evaluate(ak.to_numpy(abs(Sel_Muon.eta)), ak.to_numpy(ev_pt), "stat"))/TrgSF
+    events[f'weightcorr_{name}_TrgSF_singleMu_syst_Up_rel'] =    (TrgSF + ceval[HLT_name[period]].evaluate(np.abs(Sel_Muon.eta), ev_pt, "syst"))/TrgSF
+    events[f'weightcorr_{name}_TrgSF_singleMu_syst_Down_rel'] =  (TrgSF - ceval[HLT_name[period]].evaluate(np.abs(Sel_Muon.eta), ev_pt, "syst"))/TrgSF
+    events[f'weightcorr_{name}_TrgSF_singleMu_stat_{period}_Up_rel'] =    (TrgSF + ceval[HLT_name[period]].evaluate(np.abs(Sel_Muon.eta), ev_pt, "stat"))/TrgSF
+    events[f'weightcorr_{name}_TrgSF_singleMu_stat_{period}_Down_rel'] =  (TrgSF - ceval[HLT_name[period]].evaluate(np.abs(Sel_Muon.eta), ev_pt, "stat"))/TrgSF
     return TrgSF
 
 def get_trigger_correction_e(Sel_Electron, events, name, period):
@@ -134,7 +117,7 @@ def get_trigger_correction_e(Sel_Electron, events, name, period):
         '2016_HIPM': 'Ele25',
     }
     # sf for e trigger from previous analysis: https://twiki.cern.ch/twiki/bin/viewauth/CMS/EgHLTScaleFactorMeasurements
-    fTrigger_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/{period}/electron/sf_el_{period}_HLT{HLT_name[period]}_witherr.root' 
+    fTrigger_path = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/electron/data/{period}/sf_el_{period}_HLT{HLT_name[period]}_witherr.root' 
     evaluator_Trigger = get_scales_fromjson(fTrigger_path)
     e_pt = ak.to_numpy(Sel_Electron.pt)
     e_pt = np.where(Sel_Electron.pt<20, 20, Sel_Electron.pt)
@@ -194,9 +177,10 @@ def compute_tau_e_corr(Sel_Tau, period):
     ceval = get_correction_central('tau', period)
     # until correctionlib handles jagged data natively we have to flatten and unflatten
     flat_lep, nlep = ak.flatten(Sel_Tau), ak.num(Sel_Tau)
-    corr = ceval["tau_energy_scale"].evaluate(ak.to_numpy(flat_lep.pt), ak.to_numpy(flat_lep.eta), ak.to_numpy(flat_lep.decayMode), ak.to_numpy(flat_lep.genPartFlav), "DeepTau2017v2p1", 'nom')
-    corr_up = ceval["tau_energy_scale"].evaluate(ak.to_numpy(flat_lep.pt), ak.to_numpy(flat_lep.eta), ak.to_numpy(flat_lep.decayMode), ak.to_numpy(flat_lep.genPartFlav), "DeepTau2017v2p1", 'up')
-    corr_down = ceval["tau_energy_scale"].evaluate(ak.to_numpy(flat_lep.pt), ak.to_numpy(flat_lep.eta), ak.to_numpy(flat_lep.decayMode), ak.to_numpy(flat_lep.genPartFlav), "DeepTau2017v2p1", 'down')
+
+    corr = ceval["tau_energy_scale"].evaluate(flat_lep.pt, flat_lep.eta, flat_lep.decayMode, flat_lep.genPartFlav, "DeepTau2017v2p1", 'nom')
+    corr_up = ceval["tau_energy_scale"].evaluate(flat_lep.pt, flat_lep.eta, flat_lep.decayMode, flat_lep.genPartFlav, "DeepTau2017v2p1", 'up')
+    corr_down = ceval["tau_energy_scale"].evaluate(flat_lep.pt, flat_lep.eta, flat_lep.decayMode, flat_lep.genPartFlav, "DeepTau2017v2p1", 'down')
     NRJscale_corr = ak.unflatten(corr, nlep)
     NRJscale_corr_up = ak.unflatten(corr_up, nlep)
     NRJscale_corr_down = ak.unflatten(corr_down, nlep)
@@ -211,9 +195,9 @@ def get_pileup_correction(events, period, save_updown=True):
         '2018': 'Collisions18_UltraLegacy_goldenJSON'
     }
     ceval = get_correction_central('pileup', period)
-    corr = ceval[PU_key[period]].evaluate(ak.to_numpy(events.Pileup.nTrueInt), 'nominal')
-    corr_up = ceval[PU_key[period]].evaluate(ak.to_numpy(events.Pileup.nTrueInt), 'up')
-    corr_down = ceval[PU_key[period]].evaluate(ak.to_numpy(events.Pileup.nTrueInt), 'down')
+    corr = ceval[PU_key[period]].evaluate(events.Pileup.nTrueInt, 'nominal')
+    corr_up = ceval[PU_key[period]].evaluate(events.Pileup.nTrueInt, 'up')
+    corr_down = ceval[PU_key[period]].evaluate(events.Pileup.nTrueInt, 'down')
 
     if save_updown:
         events[f'weightcorr_PileUp_Total_Central'] = corr
@@ -222,23 +206,23 @@ def get_pileup_correction(events, period, save_updown=True):
     return corr, corr_up, corr_down
 
 def compute_sf_L1PreFiring(events):
-    sf_L1PreFiring = ak.to_numpy(events['L1PreFiringWeight']['Nom'])
+    sf_L1PreFiring = events['L1PreFiringWeight']['Nom']
     events['weightcorr_L1PreFiring_Total_Central'] = sf_L1PreFiring
     #events['weightcorr_L1PreFiring_Total_Up'] = ak.to_numpy(events['L1PreFiringWeight']['Up'])
     #events['weightcorr_L1PreFiring_Total_Down'] = ak.to_numpy(events['L1PreFiringWeight']['Dn'])
-    events['weightcorr_L1PreFiring_ECAL_Central_rel'] = ak.to_numpy(events['L1PreFiringWeight']['ECAL_Nom'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_ECALUp_rel'] = ak.to_numpy(events['L1PreFiringWeight']['ECAL_Up'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_ECALDown_rel'] = ak.to_numpy(events['L1PreFiringWeight']['ECAL_Dn'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_Muon_Central_rel'] = ak.to_numpy(events['L1PreFiringWeight']['Muon_Nom'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_Muon_StatUp_rel'] = ak.to_numpy(events['L1PreFiringWeight']['Muon_StatUp'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_Muon_StatDown_rel'] = ak.to_numpy(events['L1PreFiringWeight']['Muon_StatDn'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_Muon_SystUp_rel'] = ak.to_numpy(events['L1PreFiringWeight']['Muon_SystUp'])/sf_L1PreFiring
-    events['weightcorr_L1PreFiring_Muon_SystDown_rel'] = ak.to_numpy(events['L1PreFiringWeight']['Muon_SystDn'])/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_ECAL_Central_rel'] = events['L1PreFiringWeight']['ECAL_Nom']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_ECALUp_rel'] = events['L1PreFiringWeight']['ECAL_Up']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_ECALDown_rel'] = events['L1PreFiringWeight']['ECAL_Dn']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_Muon_Central_rel'] = events['L1PreFiringWeight']['Muon_Nom']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_Muon_StatUp_rel'] = events['L1PreFiringWeight']['Muon_StatUp']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_Muon_StatDown_rel'] = events['L1PreFiringWeight']['Muon_StatDn']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_Muon_SystUp_rel'] = events['L1PreFiringWeight']['Muon_SystUp']/sf_L1PreFiring
+    events['weightcorr_L1PreFiring_Muon_SystDown_rel'] = events['L1PreFiringWeight']['Muon_SystDn']/sf_L1PreFiring
     return sf_L1PreFiring
 
 def myJetSF(jets, ceval, syst):
     j, nj = ak.flatten(jets), ak.num(jets)
-    sf = ceval.evaluate(syst,'L', np.array(j.hadronFlavour), np.array(abs(j.eta)), np.array(j.pt)) 
+    sf = ceval.evaluate(syst,'L', np.array(j.hadronFlavour), np.array(abs(j.eta)), np.array(j.pt))
     return ak.unflatten(sf, nj)
 
 def get_BTag_sf(events, period):
@@ -257,12 +241,11 @@ def get_BTag_sf(events, period):
     effMC = {}
     effData = {}
     mask_JetFlavor = {}
-    #effMC_err = {}
     flavors = [0,4,5]
     systematics = ["central", "up_uncorrelated", "up_correlated", "down_uncorrelated", "down_correlated"]
     for flavor in flavors:
         mask_JetFlavor[flavor] = events.bjets.hadronFlavour == flavor
-        f_path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/corr_schema/{period}/btagEff_{str(flavor)}.json')
+        f_path = os.path.join(os.getenv("ANALYSIS_PATH"),f'CoffeaAnalysis/corrections/BTagSF/data/btagEff_json/{period}/btagEff_{str(flavor)}.json')
         ceval = correctionlib.CorrectionSet.from_file(f_path)
         # need to do that because jagged array
         wrap_ceval = correctionlib_wrapper(ceval['BTagEff'])
@@ -272,10 +255,6 @@ def get_BTag_sf(events, period):
             effData[flavor][systematic] = {}
             effData[flavor][systematic]['PassLoose'] = myJetSF(events.bjets[mask_JetFlavor[flavor] & mask_JetPassLoose], cset[key_effData[flavor]], systematic)
             effData[flavor][systematic]['NotPassLoose'] = myJetSF(events.bjets[mask_JetFlavor[flavor] & ~mask_JetPassLoose], cset[key_effData[flavor]], systematic)
-        
-        #f_path_err = os.path.join(os.getenv("ANALYSIS_PATH"),f'BTagSF/corr_schema/{period}/btagEff_{str(flavor)}_err.json')
-        #ceval_err = correctionlib.CorrectionSet.from_file(f_path_err)
-        #effMC_err[flavor] = ceval_err['BTagEff_err'].evaluate(ak.to_numpy(events.bjets.pt), np.abs(ak.to_numpy(events.bjets.eta)))
 
     effMC_JetPassLoose = ak.concatenate([effMC[0][mask_JetFlavor[0] & mask_JetPassLoose], effMC[4][mask_JetFlavor[4] & mask_JetPassLoose], effMC[5][mask_JetFlavor[5] & mask_JetPassLoose ]], axis=1)
     effMC_JetNotPassLoose = ak.concatenate([effMC[0][mask_JetFlavor[0] & ~mask_JetPassLoose], effMC[4][mask_JetFlavor[4] & ~mask_JetPassLoose], effMC[5][mask_JetFlavor[5] & ~mask_JetPassLoose ]], axis=1)
@@ -323,456 +302,392 @@ def get_BTag_sf(events, period):
 
     return BTag_sf["central"]
 
+def compute_jet_corr(events, period, mode):
+    if mode != 'Data':
+        path_to_corr = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/JET/data/MC'
+        Area_JEC = {
+            '2016_HIPM': 'Summer19UL16APV_V7_MC',
+            '2016': 'Summer19UL16_V7_MC',
+            '2017': 'Summer19UL17_V5_MC',
+            '2018': 'Summer19UL18_V5_MC'
+        }
+        Area_JER = {
+            '2016_HIPM': 'Summer20UL16APV_JRV3_MC',
+            '2016': 'Summer20UL16_JRV3_MC',
+            '2017': 'Summer19UL17_JRV2_MC',
+            '2018': 'Summer19UL18_JRV2_MC'
+        }
+    else:
+        path_to_corr = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/JET/data/DATA'
+        ds = events.metadata["dataset"] # dataset name
+        ds = ds.split('_nano')[0]
+        AREA = ds[-1:]
 
+        if period in ['2017', '2018']:
+            Area_JEC = {
+                '2017': f'Summer19UL17_Run{AREA}_V5_DATA',
+                '2018': f'Summer19UL18_Run{AREA}_V5_DATA'}
+        if period == '2016':
+            Area_JEC = {'2016': 'Summer19UL16_RunFGH_V7_DATA'}
+        if period == '2016_HIPM':
+            if AREA in ['B','C','D']:
+                Area_JEC = {'2016_HIPM': 'Summer19UL16APV_RunBCD_V7_DATA'}
+            if AREA in ['E','F']:
+                Area_JEC = {'2016_HIPM': 'Summer19UL16APV_RunEF_V7_DATA'}
+        Area_JER = {
+            '2016_HIPM': 'Summer20UL16APV_JRV3_DATA',
+            '2016': 'Summer20UL16_JRV3_DATA',
+            '2017': 'Summer19UL17_JRV2_DATA',
+            '2018': 'Summer19UL18_JRV2_DATA'
+        }
+        
+    type_of_jet = 'AK4PFchs'
+    corrections_names_JEC = ['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']
+    corrections_names_JER = ['PtResolution', 'SF']
+
+    ext = extractor()
+    ext.add_weight_sets([
+        f" * * {path_to_corr}/{Area_JEC[period]}/{Area_JEC[period]}_{corr_name}_{type_of_jet}.txt" for corr_name in corrections_names_JEC
+    ])
+    ext.add_weight_sets([f" * * {path_to_corr}/{Area_JEC[period]}/{Area_JEC[period]}_Uncertainty_{type_of_jet}.junc.txt"])
+    ext.add_weight_sets([
+        f" * * {path_to_corr}/{Area_JER[period]}/{Area_JER[period]}_{corr_name}_{type_of_jet}.txt" for corr_name in corrections_names_JER
+    ])
+    ext.finalize()
+    evaluator = ext.make_evaluator()
+
+    inputs = {name: evaluator[name] for name in dir(evaluator)}
+    stack = JECStack(inputs)
+    jetVetoMap = GetJetVetoMaps(events, period)
+    
+    events["Jet","vetomap"] = jetVetoMap
+    jets = events.SelJet
+    jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
+    jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
+    jets['PU_rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]
+    jets['vetoMap'] = jetVetoMap
+    name_map = stack.blank_name_map
+    name_map['JetPt'] = 'pt'
+    name_map['JetEta'] = 'eta'
+    name_map['JetPhi'] = 'phi'
+    name_map['JetMass'] = 'mass'
+    name_map['JetA'] = 'area'
+    name_map['ptRaw'] = 'pt_raw'
+    name_map['massRaw'] = 'mass_raw'
+    name_map['Rho'] = 'PU_rho'
+    name_map['vetoMap'] = 'vetoMap'
+    name_map['METpt'] = 'pt'
+    name_map['METphi'] = 'phi'
+    name_map['UnClusteredEnergyDeltaX'] = 'MetUnclustEnUpDeltaX'
+    name_map['UnClusteredEnergyDeltaY'] = 'MetUnclustEnUpDeltaY'
+    
+    events_cache = events.caches[0]
+    if mode != 'Data':
+        jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.MatchedGenPt, 0), np.float32)
+        name_map['ptGenJet'] = 'pt_gen'
+    else:
+        #JER sf for data are set to one but we need moke ptGenJet to apply CorrectedJetsFactory to DATA data
+        jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.pt*0, 0), np.float32)
+        name_map['ptGenJet'] = 'pt_gen'
+
+    jet_factory = CorrectedJetsFactory(name_map, stack)
+    corrected_jets = jet_factory.build(jets, lazy_cache=events_cache)
+
+    return corrected_jets 
+
+
+#helpers ----------------------------------------------------------------------------------------------------------------------
 def weightcorr_TauID_genuineElectron(events, Sel_Tau, name, ceval, period, DeepTauVersion):
-    sf_Vse = ak.to_numpy(ceval[f"{DeepTauVersion}VSe"].evaluate(ak.to_numpy(Sel_Tau.eta), ak.to_numpy(Sel_Tau.genPartFlav), 'VVLoose', 'nom'))
-    sf_Vse_up_rel = ak.to_numpy(ceval[f"{DeepTauVersion}VSe"].evaluate(ak.to_numpy(Sel_Tau.eta), ak.to_numpy(Sel_Tau.genPartFlav), 'VVLoose', 'up'))/sf_Vse
-    sf_Vse_down_rel = ak.to_numpy(ceval[f"{DeepTauVersion}VSe"].evaluate(ak.to_numpy(Sel_Tau.eta), ak.to_numpy(Sel_Tau.genPartFlav), 'VVLoose', 'down'))/sf_Vse
+    sf_Vse = ceval[f"{DeepTauVersion}VSe"].evaluate(Sel_Tau.eta, Sel_Tau.genPartFlav, 'VVLoose', 'nom')
+    sf_Vse_up_rel = ceval[f"{DeepTauVersion}VSe"].evaluate(Sel_Tau.eta, Sel_Tau.genPartFlav, 'VVLoose', 'up')/sf_Vse
+    sf_Vse_down_rel = ceval[f"{DeepTauVersion}VSe"].evaluate(Sel_Tau.eta, Sel_Tau.genPartFlav, 'VVLoose', 'down')/sf_Vse
     #SFs are eta dependent (split into barrel and endcap regions, i.e [0,1.5,2.3]), and uncorelated across area
-    Sel_Tau_barrel = np.abs(Sel_Tau.eta) < 1.5
-    Sel_Tau_endcaps = np.abs(Sel_Tau.eta) >= 1.5
-    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_barrel_Up_rel'] = ak.concatenate([ak.unflatten(sf_Vse_up_rel[Sel_Tau_barrel], Sel_Tau_barrel*1), 
-                                                                                              ak.unflatten(np.ones(len(Sel_Tau_endcaps))[Sel_Tau_endcaps], Sel_Tau_endcaps*1)
-                                                                                              ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_barrel_Down_rel'] = ak.concatenate([ak.unflatten(sf_Vse_down_rel[Sel_Tau_barrel], Sel_Tau_barrel*1), 
-                                                                                                ak.unflatten(np.ones(len(Sel_Tau_endcaps))[Sel_Tau_endcaps], Sel_Tau_endcaps*1)
-                                                                                                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_endcaps_Up_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_barrel))[Sel_Tau_barrel], Sel_Tau_barrel*1), 
-                                                                                               ak.unflatten(sf_Vse_up_rel[Sel_Tau_endcaps], Sel_Tau_endcaps*1)
-                                                                                               ], axis=1) 
-    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_endcaps_Down_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_barrel))[Sel_Tau_barrel], Sel_Tau_barrel*1), 
-                                                                                                 ak.unflatten(sf_Vse_down_rel[Sel_Tau_endcaps], Sel_Tau_endcaps*1)
-                                                                                                 ], axis=1) 
-    #events[f'weightcorr_{name}_TauID_genuineElectron_Total_Up'] =sf_Vse_up_rel*sf_Vse
-    #events[f'weightcorr_{name}_TauID_genuineElectron_Total_Down'] = sf_Vse_down_rel*sf_Vse
-    events[f'weightcorr_{name}_TauID_genuineElectron_Total_Central'] =sf_Vse
+    Sel_Tau_barrel = (np.abs(Sel_Tau.eta) < 1.5)
+    Sel_Tau_endcaps = (np.abs(Sel_Tau.eta) >= 1.5)
+    #save in events
+    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_barrel_Up_rel']    = np.where(Sel_Tau_barrel, sf_Vse_up_rel,   np.ones_like(sf_Vse))
+    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_barrel_Down_rel']  = np.where(Sel_Tau_barrel, sf_Vse_down_rel, np.ones_like(sf_Vse))
+    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_endcaps_Up_rel']   = np.where(Sel_Tau_endcaps, sf_Vse_up_rel,  np.ones_like(sf_Vse))
+    events[f'weightcorr_{name}_TauID_genuineElectron_{period}_endcaps_Down_rel'] = np.where(Sel_Tau_endcaps, sf_Vse_down_rel, np.ones_like(sf_Vse))
+    events[f'weightcorr_{name}_TauID_genuineElectron_Total_Central'] = sf_Vse
     return sf_Vse
 
 def weightcorr_TauID_genuineMuon(events, Sel_Tau, name, ceval, period, DeepTauVersion):
-    sf_Vsmu = ak.to_numpy(ceval[f"{DeepTauVersion}VSmu"].evaluate(ak.to_numpy(Sel_Tau.eta), ak.to_numpy(Sel_Tau.genPartFlav), 'Tight', 'nom'))
-    sf_Vsmu_up_rel = ak.to_numpy(ceval[f"{DeepTauVersion}VSmu"].evaluate(ak.to_numpy(Sel_Tau.eta), ak.to_numpy(Sel_Tau.genPartFlav), 'Tight', 'up'))/sf_Vsmu
-    sf_Vsmu_down_rel = ak.to_numpy(ceval[f"{DeepTauVersion}VSmu"].evaluate(ak.to_numpy(Sel_Tau.eta), ak.to_numpy(Sel_Tau.genPartFlav), 'Tight', 'down'))/sf_Vsmu
+    sf_Vsmu = ceval[f"{DeepTauVersion}VSmu"].evaluate(Sel_Tau.eta, Sel_Tau.genPartFlav, 'Tight', 'nom')
+    sf_Vsmu_up_rel = ceval[f"{DeepTauVersion}VSmu"].evaluate(Sel_Tau.eta, Sel_Tau.genPartFlav, 'Tight', 'up')/sf_Vsmu
+    sf_Vsmu_down_rel = ceval[f"{DeepTauVersion}VSmu"].evaluate(Sel_Tau.eta, Sel_Tau.genPartFlav, 'Tight', 'down')/sf_Vsmu
     #SFs are eta dependent (bins are [0,0.4,0.8,1.2,1.7,2.3]), and uncorelated across area 
-    Sel_Tau_etaLt0p4 = np.abs(Sel_Tau.eta) < 0.4
-    Sel_Tau_eta0p4to0p8 = (np.abs(Sel_Tau.eta) >= 0.4) & (np.abs(Sel_Tau.eta) < 0.8)
-    Sel_Tau_eta0p8to1p2 = (np.abs(Sel_Tau.eta) >= 0.8) & (np.abs(Sel_Tau.eta) < 1.2)
-    Sel_Tau_eta1p2to1p7 = (np.abs(Sel_Tau.eta) >= 1.2) & (np.abs(Sel_Tau.eta) < 1.7)
-    Sel_Tau_etaGt1p7 = np.abs(Sel_Tau.eta) >= 1.7
-
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaLt0p4_Up_rel'] = ak.concatenate([ak.unflatten(sf_Vsmu_up_rel[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaLt0p4_Down_rel'] = ak.concatenate([ak.unflatten(sf_Vsmu_down_rel[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p4to0p8_Up_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(sf_Vsmu_up_rel[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p4to0p8_Down_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(sf_Vsmu_down_rel[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p8to1p2_Up_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(sf_Vsmu_up_rel[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p8to1p2_Down_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(sf_Vsmu_down_rel[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta1p2to1p7_Up_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(sf_Vsmu_up_rel[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta1p2to1p7_Down_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(sf_Vsmu_down_rel[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_etaGt1p7))[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaGt1p7_Up_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(sf_Vsmu_up_rel[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaGt1p7_Down_rel'] = ak.concatenate([ak.unflatten(np.ones(len(Sel_Tau_etaLt0p4))[Sel_Tau_etaLt0p4], Sel_Tau_etaLt0p4*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p4to0p8))[Sel_Tau_eta0p4to0p8], Sel_Tau_eta0p4to0p8*1), 
-                    ak.unflatten(np.ones(len(Sel_Tau_eta0p8to1p2))[Sel_Tau_eta0p8to1p2], Sel_Tau_eta0p8to1p2*1),
-                    ak.unflatten(np.ones(len(Sel_Tau_eta1p2to1p7))[Sel_Tau_eta1p2to1p7], Sel_Tau_eta1p2to1p7*1),
-                    ak.unflatten(sf_Vsmu_down_rel[Sel_Tau_etaGt1p7], Sel_Tau_etaGt1p7*1)
-                ], axis=1)
-    #events[f'weightcorr_{name}_TauID_genuineMuon_Total_Up'] =sf_Vsmu_up_rel*sf_Vsmu
-    #events[f'weightcorr_{name}_TauID_genuineMuon_Total_Down'] = sf_Vsmu_down_rel*sf_Vsmu
-    events[f'weightcorr_{name}_TauID_genuineMuon_Total_Central'] =sf_Vsmu
+    Sel_Tau_etaLt0p4 = (np.abs(Sel_Tau.eta) < 0.4)
+    Sel_Tau_eta0p4to0p8 = ((np.abs(Sel_Tau.eta) >= 0.4) & (np.abs(Sel_Tau.eta) < 0.8))
+    Sel_Tau_eta0p8to1p2 = ((np.abs(Sel_Tau.eta) >= 0.8) & (np.abs(Sel_Tau.eta) < 1.2))
+    Sel_Tau_eta1p2to1p7 = ((np.abs(Sel_Tau.eta) >= 1.2) & (np.abs(Sel_Tau.eta) < 1.7))
+    Sel_Tau_etaGt1p7 = (np.abs(Sel_Tau.eta) >= 1.7)
+    #save in events
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaLt0p4_Up_rel']     = np.where(Sel_Tau_etaLt0p4   , sf_Vsmu_up_rel,   np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaLt0p4_Down_rel']   = np.where(Sel_Tau_etaLt0p4   , sf_Vsmu_down_rel, np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p4to0p8_Up_rel']  = np.where(Sel_Tau_eta0p4to0p8, sf_Vsmu_up_rel,   np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p4to0p8_Down_rel']= np.where(Sel_Tau_eta0p4to0p8, sf_Vsmu_down_rel, np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p8to1p2_Up_rel']  = np.where(Sel_Tau_eta0p8to1p2, sf_Vsmu_up_rel,   np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta0p8to1p2_Down_rel']= np.where(Sel_Tau_eta0p8to1p2, sf_Vsmu_down_rel, np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta1p2to1p7_Up_rel']  = np.where(Sel_Tau_eta1p2to1p7, sf_Vsmu_up_rel,   np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_eta1p2to1p7_Down_rel']= np.where(Sel_Tau_eta1p2to1p7, sf_Vsmu_down_rel, np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaGt1p7_Up_rel']     = np.where(Sel_Tau_etaGt1p7   , sf_Vsmu_up_rel,   np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_{period}_etaGt1p7_Down_rel']   = np.where(Sel_Tau_etaGt1p7   , sf_Vsmu_down_rel, np.ones_like(sf_Vsmu))
+    events[f'weightcorr_{name}_TauID_genuineMuon_Total_Central'] = sf_Vsmu
     return sf_Vsmu
 
 def weightcorr_TauID_genuineTau(events, Sel_Tau, name, ceval, period, DeepTauVersion):
-    sf_VsJet = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', 'nom', 'dm'))
+    sf_VsJet = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', 'nom', 'dm')
     # SFs from the uncertainties on the linear fit parameters
     #   - Uncstat1, Uncstat2 = statistical uncertainties (Uncstat{i}Fit) decorrelated by DM (binned in 0, 1, 10, and 11) and era
     DecayModes = ['0', '1', '10', '11']
     stat_sf_list = ['stat1', 'stat2']
     for stat in stat_sf_list:
         for dm in DecayModes:
-            sf_VsJet_Up_rel = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'{stat}_dm{dm}_up', 'dm'))/sf_VsJet
-            sf_VsJet_Down_rel = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'{stat}_dm{dm}_down', 'dm'))/sf_VsJet
-            list_up = []
-            list_down = []
-            for decayM in DecayModes:
-                Sel_Tau_dm = Sel_Tau.decayMode == int(decayM)
-                if decayM == dm:
-                    list_up.append(ak.unflatten(sf_VsJet_Up_rel[Sel_Tau_dm], Sel_Tau_dm*1))
-                    list_down.append(ak.unflatten(sf_VsJet_Down_rel[Sel_Tau_dm], Sel_Tau_dm*1))
-                else:
-                    list_up.append(ak.unflatten(np.ones(len(Sel_Tau_dm))[Sel_Tau_dm], Sel_Tau_dm*1))
-                    list_down.append(ak.unflatten(np.ones(len(Sel_Tau_dm))[Sel_Tau_dm], Sel_Tau_dm*1))
-            List_UP_conc = ak.concatenate(list_up, axis=1)
-            List_down_conc = ak.concatenate(list_down, axis=1)
-
-            List_UP_null_mask = ak.num(List_UP_conc) == 0
-            if ak.sum(List_UP_null_mask) != 0:
-                print(f'issue with weightcorr_{name}_TauID_genuineTau_Unc{stat}_DM{dm}_{period}_Up_rel')
-                List_UP_conc = ak.where(List_UP_null_mask, ak.Array([[1]]), List_UP_conc)
-                #List_UP_conc = ak.to_regular(List_UP_conc)
-
-            List_down_null_mask = ak.num(List_down_conc) == 0
-            if ak.sum(List_down_null_mask) != 0:
-                print(f'issue with weightcorr_{name}_TauID_genuineTau_Unc{stat}_DM{dm}_{period}_Down_rel')
-                List_down_conc = ak.where(List_down_null_mask, ak.Array([[1]]), List_down_conc)
-                #List_down_conc = ak.to_regular(List_down_conc)
-
-            events[f'weightcorr_{name}_TauID_genuineTau_Unc{stat}_DM{dm}_{period}_Up_rel'] = List_UP_conc
-            events[f'weightcorr_{name}_TauID_genuineTau_Unc{stat}_DM{dm}_{period}_Down_rel'] = List_down_conc
-
+            sf_VsJet_Up_rel = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', f'{stat}_dm{dm}_up', 'dm')/sf_VsJet
+            sf_VsJet_Down_rel = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', f'{stat}_dm{dm}_down', 'dm')/sf_VsJet
+            Sel_Tau_dm = (Sel_Tau.decayMode == int(dm))
+            events[f'weightcorr_{name}_TauID_genuineTau_Unc{stat}_DM{dm}_{period}_Up_rel'] =   np.where(Sel_Tau_dm   , sf_VsJet_Up_rel,   np.ones_like(sf_VsJet))
+            events[f'weightcorr_{name}_TauID_genuineTau_Unc{stat}_DM{dm}_{period}_Down_rel'] = np.where(Sel_Tau_dm   , sf_VsJet_Down_rel, np.ones_like(sf_VsJet))
     #   - UncSystAllEras = The component of the systematic uncertainty that is correlated across DMs and eras
-    events[f'weightcorr_{name}_TauID_genuineTau_UncSystAllEras_Up_rel'] = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', 'syst_alleras_up', 'dm'))/sf_VsJet
-    events[f'weightcorr_{name}_TauID_genuineTau_UncSystAllEras_Down_rel'] = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', 'syst_alleras_down', 'dm'))/sf_VsJet
-
+    events[f'weightcorr_{name}_TauID_genuineTau_UncSystAllEras_Up_rel'] = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', 'syst_alleras_up', 'dm')/sf_VsJet 
+    events[f'weightcorr_{name}_TauID_genuineTau_UncSystAllEras_Down_rel'] = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', 'syst_alleras_down', 'dm')/sf_VsJet 
     #   - UncSyst{Era} = The component of the systematic uncertainty that is correlated across DMs but uncorrelated by eras
-    events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_{period}_Up_rel'] = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'syst_{Area_ref[period]}_up', 'dm'))/sf_VsJet
-    events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_{period}_Down_rel'] = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'syst_{Area_ref[period]}_down', 'dm'))/sf_VsJet
-
-    if DeepTauVersion == "DeepTau2018v2p5":
-        #   - UncSyst{Era}_DM{DM} = The component of the systematic uncertainty due to the tau energy scale that is correlated across DMs and eras
-        for dm in DecayModes:
-            sf_VsJet_Up_rel = ak.to_numpy(ceval["DeepTau2018v2p5VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'syst_TES_{period}_dm{dm}_up', 'dm'))/sf_VsJet
-            sf_VsJet_Down_rel = ak.to_numpy(ceval["DeepTau2018v2p5VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'syst_TES_{period}_dm{dm}_down', 'dm'))/sf_VsJet
-            list_up = []
-            list_down = []
-            for decayM in DecayModes:
-                Sel_Tau_dm = Sel_Tau.decayMode == int(decayM)
-                if decayM == dm:
-                    list_up.append(ak.unflatten(sf_VsJet_Up_rel[Sel_Tau_dm], Sel_Tau_dm*1))
-                    list_down.append(ak.unflatten(sf_VsJet_Down_rel[Sel_Tau_dm], Sel_Tau_dm*1))
-                else:
-                    list_up.append(ak.unflatten(np.ones(len(Sel_Tau_dm))[Sel_Tau_dm], Sel_Tau_dm*1))
-                    list_down.append(ak.unflatten(np.ones(len(Sel_Tau_dm))[Sel_Tau_dm], Sel_Tau_dm*1))
-            List_UP_conc = ak.concatenate(list_up, axis=1)
-            List_down_conc = ak.concatenate(list_down, axis=1)
-
-            List_UP_null_mask = ak.num(List_UP_conc) == 0
-            if ak.sum(List_UP_null_mask) != 0:
-                print(f'issue with weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Up_rel')
-                List_UP_conc = ak.where(List_UP_null_mask, ak.Array([[1]]), List_UP_conc)
-                #List_UP_conc = ak.to_regular(List_UP_conc)
-
-            List_down_null_mask = ak.num(List_down_conc) == 0
-            if ak.sum(List_down_null_mask) != 0:
-                print(f'issue with weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Down_rel')
-                List_down_conc = ak.where(List_down_null_mask, ak.Array([[1]]), List_down_conc)
-                #List_down_conc = ak.to_regular(List_down_conc)
-
-            events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Up_rel'] = List_UP_conc
-            events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Down_rel'] =List_down_conc
-
-    if DeepTauVersion == "DeepTau2017v2p1":
-        #   - UncSyst{Era}_DM{DM} = The component of the systematic uncertainty that is correlated across DMs and eras
-        for dm in DecayModes:
-            sf_VsJet_Up_rel = ak.to_numpy(ceval["DeepTau2017v2p1VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'syst_dm{dm}_{Area_ref[period]}_up', 'dm'))/sf_VsJet
-            sf_VsJet_Down_rel = ak.to_numpy(ceval["DeepTau2017v2p1VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', f'syst_dm{dm}_{Area_ref[period]}_down', 'dm'))/sf_VsJet
-            list_up = []
-            list_down = []
-            for decayM in DecayModes:
-                Sel_Tau_dm = Sel_Tau.decayMode == int(decayM)
-                if decayM == dm:
-                    list_up.append(ak.unflatten(sf_VsJet_Up_rel[Sel_Tau_dm], Sel_Tau_dm*1))
-                    list_down.append(ak.unflatten(sf_VsJet_Down_rel[Sel_Tau_dm], Sel_Tau_dm*1))
-                else:
-                    list_up.append(ak.unflatten(np.ones(len(Sel_Tau_dm))[Sel_Tau_dm], Sel_Tau_dm*1))
-                    list_down.append(ak.unflatten(np.ones(len(Sel_Tau_dm))[Sel_Tau_dm], Sel_Tau_dm*1))
-            events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Up_rel'] = ak.concatenate(list_up, axis=1)
-            events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Down_rel'] =ak.concatenate(list_down, axis=1)
-            List_UP_conc = ak.concatenate(list_up, axis=1)
-            List_down_conc = ak.concatenate(list_down, axis=1)
-
-            List_UP_null_mask = ak.num(List_UP_conc) == 0
-            if ak.sum(List_UP_null_mask) != 0:
-                print(f'issue with weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Up_rel')
-                List_UP_conc = ak.where(List_UP_null_mask, ak.Array([[1]]), List_UP_conc)
-                #List_UP_conc = ak.to_regular(List_UP_conc)
-
-            List_down_null_mask = ak.num(List_down_conc) == 0
-            if ak.sum(List_down_null_mask) != 0:
-                print(f'issue with weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Down_rel')
-                List_down_conc = ak.where(List_down_null_mask, ak.Array([[1]]), List_down_conc)
-                #List_down_conc = ak.to_regular(List_down_conc)
-
-            events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Up_rel'] = List_UP_conc
-            events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Down_rel'] =List_down_conc
-
-    #events[f'weightcorr_{name}_TauID_genuineTau_Total_Up'] = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', 'up', 'dm'))
-    #events[f'weightcorr_{name}_TauID_genuineTau_Total_Down'] = ak.to_numpy(ceval[f"{DeepTauVersion}VSjet"].evaluate(ak.to_numpy(Sel_Tau.pt), ak.to_numpy(Sel_Tau.decayMode), ak.to_numpy(Sel_Tau.genPartFlav), 'Medium', 'VVLoose', 'down', 'dm'))
-    events[f'weightcorr_{name}_TauID_genuineTau_Total_Central'] = sf_VsJet
+    events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_{period}_Up_rel'] = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', f'syst_{Area_ref[period]}_up', 'dm')/sf_VsJet 
+    events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_{period}_Down_rel'] = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', f'syst_{Area_ref[period]}_down', 'dm')/sf_VsJet 
+    #   - UncSyst{Era}_DM{DM} = The component of the systematic uncertainty due to the tau energy scale that is correlated across DMs and eras
+    for dm in DecayModes:
+        sf_VsJet_Up_rel = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', f'syst_TES_{period}_dm{dm}_up', 'dm')/sf_VsJet
+        sf_VsJet_Down_rel = ceval[f"{DeepTauVersion}VSjet"].evaluate(Sel_Tau.pt, Sel_Tau.decayMode, Sel_Tau.genPartFlav, 'Medium', 'VVLoose', f'syst_TES_{period}_dm{dm}_down', 'dm')/sf_VsJet
+        Sel_Tau_dm = (Sel_Tau.decayMode == int(dm))
+        events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Up_rel'] =  np.where(Sel_Tau_dm   , sf_VsJet_Up_rel,   np.ones_like(sf_VsJet))
+        events[f'weightcorr_{name}_TauID_genuineTau_UncSyst_DM{dm}_{period}_Down_rel'] =np.where(Sel_Tau_dm   , sf_VsJet_Down_rel, np.ones_like(sf_VsJet))
+    events[f'weightcorr_{name}_TauID_genuineTau_Total_Central'] = sf_VsJet 
     return sf_VsJet
 
-def get_muonsf_Below20(events, Sel_Muon, name, ceval, period):
-    # sf for muon with pt<20 GeV
-    nlepBelow20 = Sel_Muon.pt <= 20
-    #RECO
-    # pt binning is [40, inf] but the recommendation is to apply them for muons with pT in the range [10; 200] GeV.
-    ev_pt = ak.to_numpy(Sel_Muon.pt)
-    ev_pt = np.where(ev_pt<40, 40, ev_pt)
-    RECOsf_Below20 = ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBelow20])), ak.to_numpy(ev_pt[nlepBelow20]), "nominal")
-    #ID
-    IDevaluator_Below20 = get_scales_fromjson(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/'+period+'/muon/Efficiency_muon_trackerMuon_Run' + Area_dir[period] + '_ID.json') # custom tab from twiki because ID sf in muon_Z.json are for Muon.pt > 15
-    IDsf_Below20 = ak.to_numpy(IDevaluator_Below20["NUM_MediumID_DEN_TrackerMuons/abseta_pt_value"](abs(Sel_Muon.eta[nlepBelow20]), Sel_Muon.pt[nlepBelow20])) 
-    #total
-    sf_Below20 = ak.from_numpy(RECOsf_Below20*IDsf_Below20)
+def weightcorr_MuID_RECO(events, Sel_Muon, name, ceval, period):
+    # RECO sf are split between muon with pt<120 GeV and above 120
+    nlepBelow120 = (Sel_Muon.pt <= 120)
+    nlepAbove120 = (Sel_Muon.pt > 120)
 
-    #save sf variation Below20
-    #RECO
-    RECOsf_Below20_Up_rel = ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBelow20])), ak.to_numpy(ev_pt[nlepBelow20]), "systup")/sf_Below20
-    RECOsf_Below20_Down_rel = ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBelow20])), ak.to_numpy(ev_pt[nlepBelow20]), "systdown")/sf_Below20
-    events[f'weightcorr_{name}_MuID_RECO_ptlt20_Up_rel'] = ak.concatenate([ak.unflatten(RECOsf_Below20_Up_rel*IDsf_Below20, nlepBelow20*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBelow20))[~nlepBelow20], ~nlepBelow20*1), 
-                                                                             ], axis=1)
-    events[f'weightcorr_{name}_MuID_RECO_ptlt20_Down_rel'] = ak.concatenate([ak.unflatten(RECOsf_Below20_Down_rel*IDsf_Below20, nlepBelow20*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBelow20))[~nlepBelow20], ~nlepBelow20*1), 
-                                                                             ], axis=1)
-    #ID
-    IDsf_Below20_err = IDevaluator_Below20["NUM_MediumID_DEN_TrackerMuons/abseta_pt_error"](abs(Sel_Muon.eta[nlepBelow20]), Sel_Muon.pt[nlepBelow20])
-    IDsf_Below20_Up_rel = ak.from_numpy((IDsf_Below20+IDsf_Below20_err))/sf_Below20
-    IDsf_Below20_Down_rel = ak.from_numpy((IDsf_Below20-IDsf_Below20_err))/sf_Below20
-    events[f'weightcorr_{name}_MuID_MediumID_ptlt20_Up_rel'] = ak.concatenate([ak.unflatten(IDsf_Below20_Up_rel*RECOsf_Below20, nlepBelow20*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBelow20))[~nlepBelow20], ~nlepBelow20*1), 
-                                                                             ], axis=1)
-    events[f'weightcorr_{name}_MuID_MediumID_ptlt20_Down_rel'] = ak.concatenate([ak.unflatten(IDsf_Below20_Down_rel*RECOsf_Below20, nlepBelow20*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBelow20))[~nlepBelow20], ~nlepBelow20*1), 
-                                                                             ], axis=1)
-    
-    sf_Below20_Up = ak.from_numpy(RECOsf_Below20_Up_rel*sf_Below20*IDsf_Below20_Up_rel*sf_Below20)
-    sf_Below20_Down = ak.from_numpy(RECOsf_Below20_Down_rel*sf_Below20*IDsf_Below20_Down_rel*sf_Below20)
-    return sf_Below20, sf_Below20_Up, sf_Below20_Down
+    # for Mons with pt<120 GeV, file binning is [40, inf] but the recommendation is to apply them for muons with pT in the range [10; 200] GeV.
+    Muon_pt = (Sel_Muon.pt)
+    Muon_pt = np.where(Muon_pt<40, 40, Muon_pt)
+    RECOsf_Below120 = (ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(np.abs(Sel_Muon.eta), Muon_pt, "nominal"))
+    RECOsf_Below120_syst_Up_rel =   (RECOsf_Below120 + (ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(np.abs(Sel_Muon.eta), Muon_pt, "syst")))/RECOsf_Below120
+    RECOsf_Below120_syst_Down_rel = (RECOsf_Below120 - (ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(np.abs(Sel_Muon.eta), Muon_pt, "syst")))/RECOsf_Below120
+    RECOsf_Below120_stat_Up_rel =   (RECOsf_Below120 + (ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(np.abs(Sel_Muon.eta), Muon_pt, "stat")))/RECOsf_Below120
+    RECOsf_Below120_stat_Down_rel = (RECOsf_Below120 - (ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(np.abs(Sel_Muon.eta), Muon_pt, "stat")))/RECOsf_Below120
 
-def get_muonsf_Between15and120(events, Sel_Muon, name, ceval, period):
-    # sf for muon with 15<pt<120 GeV (from central repo)
-    nlepBetween15and120 = (Sel_Muon.pt > 15) & (Sel_Muon.pt <= 120)
-    # For RECO pt binning is [40, inf] but the recommendation is to apply them for muons with pT in the range [10; 200] GeV.
-    ev_pt = ak.to_numpy(Sel_Muon.pt)
-    ev_pt = np.where(ev_pt<40, 40, ev_pt)
-    #RECO
-    RECOsf_Between15and120 = ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(ev_pt[nlepBetween15and120]), "nominal")
-    #ID
-    IDsf_Between15and120 = ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'nominal')
-    #ISO
-    ISOsf_Between15and120 = ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'nominal')
-    #total
-    sf_Between15and120 = ak.from_numpy(RECOsf_Between15and120*IDsf_Between15and120*ISOsf_Between15and120)
+    # for Mons with pt>120 GeV, custom tab from twiki because sf are not in muon_Z.json
+    Muon_p = (Sel_Muon.p)
+    Muon_p = np.where(Muon_p<50, 50, Muon_p)
+    RECOevaluator_Above120 = correctionlib.CorrectionSet.from_file(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/muon/data/'+period+f'/ScaleFactors_Muon_highPt_RECO_{Area_ref[period]}_schemaV2.json')
+    RECOsf_Above120 = (RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_p, 'nominal'))
+    RECOsf_Above120_syst_Up_rel =   (RECOsf_Above120 + (RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_p, 'syst')))/RECOsf_Above120
+    RECOsf_Above120_syst_Down_rel = (RECOsf_Above120 - (RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_p, 'syst')))/RECOsf_Above120
+    RECOsf_Above120_stat_Up_rel =   (RECOsf_Above120 + (RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_p, 'stat')))/RECOsf_Above120
+    RECOsf_Above120_stat_Down_rel = (RECOsf_Above120 - (RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_p, 'stat')))/RECOsf_Above120
 
-    #save sf variation Between15and120
-    #--RECO--
-    #syst
-    RECOsf_Between15and120_syst_Up_rel = (RECOsf_Between15and120 + ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(ev_pt[nlepBetween15and120]), "syst"))/RECOsf_Between15and120
-    RECOsf_Between15and120_syst_Down_rel = (RECOsf_Between15and120 - ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(ev_pt[nlepBetween15and120]), "syst"))/RECOsf_Between15and120
-    events[f'weightcorr_{name}_MuID_RECO_pt20to120_syst_Up_rel'] = ak.concatenate([ak.unflatten(RECOsf_Between15and120_syst_Up_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1)
-    events[f'weightcorr_{name}_MuID_RECO_pt20to120_syst_Down_rel'] = ak.concatenate([ak.unflatten(RECOsf_Between15and120_syst_Down_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1)
-    #stat
-    RECOsf_Between15and120_stat_Up_rel = (RECOsf_Between15and120 + ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(ev_pt[nlepBetween15and120]), "stat"))/RECOsf_Between15and120
-    RECOsf_Between15and120_stat_Down_rel = (RECOsf_Between15and120 - ceval['NUM_TrackerMuons_DEN_genTracks'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(ev_pt[nlepBetween15and120]), "stat"))/RECOsf_Between15and120
-    events[f'weightcorr_{name}_MuID_RECO_pt20to120_stat_{period}_Up_rel'] = ak.concatenate([ak.unflatten(RECOsf_Between15and120_stat_Up_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1)
-    events[f'weightcorr_{name}_MuID_RECO_pt20to120_stat_{period}_Down_rel'] = ak.concatenate([ak.unflatten(RECOsf_Between15and120_stat_Down_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1)
-    
-    #--ID--
-    #syst
-    IDsf_Between15and120_syst_Up_rel = (IDsf_Between15and120 + ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'syst'))/IDsf_Between15and120
-    IDsf_Between15and120_syst_Down_rel = (IDsf_Between15and120 - ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'syst'))/IDsf_Between15and120
-    events[f'weightcorr_{name}_MuID_MediumID_pt20to120_syst_Up_rel'] = ak.concatenate([ak.unflatten(IDsf_Between15and120_syst_Up_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_MediumID_pt20to120_syst_Down_rel'] = ak.concatenate([ak.unflatten(IDsf_Between15and120_syst_Down_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    #stat
-    IDsf_Between15and120_stat_Up_rel = (IDsf_Between15and120 + ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'stat'))/IDsf_Between15and120
-    IDsf_Between15and120_stat_Down_rel = (IDsf_Between15and120 - ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'stat'))/IDsf_Between15and120
-    events[f'weightcorr_{name}_MuID_MediumID_pt20to120_stat_{period}_Up_rel'] = ak.concatenate([ak.unflatten(IDsf_Between15and120_stat_Up_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_MediumID_pt20to120_stat_{period}_Down_rel'] = ak.concatenate([ak.unflatten(IDsf_Between15and120_stat_Down_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    
-    #--ISO--
-    #syst
-    ISOsf_Between15and120_syst_Up_rel = (ISOsf_Between15and120 + ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'syst'))/ISOsf_Between15and120
-    ISOsf_Between15and120_syst_Down_rel = (ISOsf_Between15and120 - ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'syst'))/ISOsf_Between15and120
-    events[f'weightcorr_{name}_MuID_LooseISO_pt20to120_syst_Up_rel'] = ak.concatenate([ak.unflatten(ISOsf_Between15and120_syst_Up_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_LooseISO_pt20to120_syst_Down_rel'] = ak.concatenate([ak.unflatten(ISOsf_Between15and120_syst_Down_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    #stat
-    ISOsf_Between15and120_stat_Up_rel = (ISOsf_Between15and120 + ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'stat'))/ISOsf_Between15and120
-    ISOsf_Between15and120_stat_Down_rel = (ISOsf_Between15and120 - ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepBetween15and120])), ak.to_numpy(Sel_Muon.pt[nlepBetween15and120]), 'stat'))/ISOsf_Between15and120
-    events[f'weightcorr_{name}_MuID_LooseISO_pt20to120_stat_{period}_Up_rel'] = ak.concatenate([ak.unflatten(ISOsf_Between15and120_stat_Up_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_LooseISO_pt20to120_stat_{period}_Down_rel'] = ak.concatenate([ak.unflatten(ISOsf_Between15and120_stat_Down_rel, nlepBetween15and120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepBetween15and120))[~nlepBetween15and120], ~nlepBetween15and120*1), 
-                                                                             ], axis=1) 
+    RECO_sf = np.where(nlepBelow120, RECOsf_Below120,   RECOsf_Above120)
 
-    #sf_Between20and120_Up = ak.from_numpy(RECOsf_Between20and120_Up_rel*sf_Between20and120*IDsf_Between20and120_Up_rel*sf_Between20and120*ISOsf_Between20and120_Up_rel*sf_Between20and120)
-    #sf_Between20and120_Down = ak.from_numpy(RECOsf_Between20and120_Down_rel*sf_Between20and120*IDsf_Between20and120_Down_rel*sf_Between20and120*ISOsf_Between20and120_Down_rel*sf_Between20and120)
-    return sf_Between15and120 #, sf_Between20and120_Up, sf_Between20and120_Down
+    #save in events
+    events[f'weightcorr_{name}_MuID_RECO_ptlt120_syst_Up_rel']    = np.where(nlepBelow120, RECOsf_Below120_syst_Up_rel,   np.ones_like(RECO_sf))
+    events[f'weightcorr_{name}_MuID_RECO_ptlt120_syst_Down_rel']  = np.where(nlepBelow120, RECOsf_Below120_syst_Down_rel, np.ones_like(RECO_sf))
+    events[f'weightcorr_{name}_MuID_RECO_ptlt120_stat_{period}_Up_rel']   = np.where(nlepBelow120, RECOsf_Below120_stat_Up_rel,  np.ones_like(RECO_sf))
+    events[f'weightcorr_{name}_MuID_RECO_ptlt120_stat_{period}_Down_rel'] = np.where(nlepBelow120, RECOsf_Below120_stat_Down_rel, np.ones_like(RECO_sf))
 
-def get_muonsf_Above120(events, Sel_Muon, name, ceval, period):
-    # sf for muon with pt>120 GeV (ID and ISO same as muon with 20<pt<120 GeV)
-    nlepAbove120 = Sel_Muon.pt > 120
-    #RECO
-    RECOevaluator_Above120 = correctionlib.CorrectionSet.from_file(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/'+period+f'/muon/ScaleFactors_Muon_highPt_RECO_{Area_ref[period]}_schemaV2.json')# custom tab from twiki because sf are not in muon_Z.json
-    RECOsf_Above120 = RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.p[nlepAbove120]), 'nominal')
-    #ID
-    IDsf_Above120 = ceval['NUM_HighPtID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'nominal')
-    #ISO
-    ISOsf_Above120 = ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'nominal')
-    #total
-    sf_Above120 = ak.from_numpy(RECOsf_Above120*IDsf_Above120*ISOsf_Above120)
+    events[f'weightcorr_{name}_MuID_RECO_ptgt120_syst_Up_rel'] = np.where(nlepAbove120, RECOsf_Above120_syst_Up_rel,   np.ones_like(RECO_sf))
+    events[f'weightcorr_{name}_MuID_RECO_ptgt120_syst_Down_rel'] = np.where(nlepAbove120, RECOsf_Above120_syst_Down_rel,   np.ones_like(RECO_sf))
+    events[f'weightcorr_{name}_MuID_RECO_ptgt120_stat_{period}_Up_rel'] = np.where(nlepAbove120, RECOsf_Above120_stat_Up_rel,   np.ones_like(RECO_sf))
+    events[f'weightcorr_{name}_MuID_RECO_ptgt120_stat_{period}_Down_rel'] = np.where(nlepAbove120, RECOsf_Above120_stat_Down_rel,   np.ones_like(RECO_sf))
 
-    #save sf variation Above120
-    #--RECO--
-    #syst
-    RECOsf_Above120_syst_Up_rel = (RECOsf_Above120 + RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.p[nlepAbove120]), 'syst'))/RECOsf_Above120
-    RECOsf_Above120_syst_Down_rel = (RECOsf_Above120 - RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.p[nlepAbove120]), 'syst'))/RECOsf_Above120
-    events[f'weightcorr_{name}_MuID_RECO_ptgt120_syst_Up_rel'] = ak.concatenate([ak.unflatten(RECOsf_Above120_syst_Up_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_RECO_ptgt120_syst_Down_rel'] = ak.concatenate([ak.unflatten(RECOsf_Above120_syst_Down_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    #stat
-    RECOsf_Above120_stat_Up_rel = (RECOsf_Above120 + RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.p[nlepAbove120]), 'stat'))/RECOsf_Above120
-    RECOsf_Above120_stat_Down_rel = (RECOsf_Above120 - RECOevaluator_Above120["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.p[nlepAbove120]), 'stat'))/RECOsf_Above120
-    events[f'weightcorr_{name}_MuID_RECO_ptgt120_stat_{period}_Up_rel'] = ak.concatenate([ak.unflatten(RECOsf_Above120_stat_Up_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_RECO_ptgt120_stat_{period}_Down_rel'] = ak.concatenate([ak.unflatten(RECOsf_Above120_stat_Down_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
+    return RECO_sf
 
-    #--ID--
-    #syst
-    IDsf_Above120_syst_Up_rel = (IDsf_Above120 + ceval['NUM_HighPtID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'syst'))/IDsf_Above120
-    IDsf_Above120_syst_Down_rel = (IDsf_Above120 - ceval['NUM_HighPtID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'syst'))/IDsf_Above120
-    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_syst_Up_rel'] = ak.concatenate([ak.unflatten(IDsf_Above120_syst_Up_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_syst_Down_rel'] = ak.concatenate([ak.unflatten(IDsf_Above120_syst_Down_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    #stat
-    IDsf_Above120_stat_Up_rel = (IDsf_Above120 + ceval['NUM_HighPtID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'stat'))/IDsf_Above120
-    IDsf_Above120_stat_Down_rel = (IDsf_Above120 - ceval['NUM_HighPtID_DEN_TrackerMuons'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'stat'))/IDsf_Above120
-    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_stat_{period}_Up_rel'] = ak.concatenate([ak.unflatten(IDsf_Above120_stat_Up_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_stat_{period}_Down_rel'] = ak.concatenate([ak.unflatten(IDsf_Above120_stat_Down_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
+def weightcorr_MuID_MediumID(events, Sel_Muon, name, ceval, period):
+    # ID sf are split between muon with pt<120 GeV and above 120
+    nlepBelow120 = (Sel_Muon.pt <= 120)
+    nlepAbove120 = (Sel_Muon.pt > 120)
 
-    #--ISO--
-    #syst
-    ISOsf_Above120_syst_Up_rel = (ISOsf_Above120 + ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'syst'))/ISOsf_Above120
-    ISOsf_Above120_syst_Down_rel = (ISOsf_Above120 - ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'syst'))/ISOsf_Above120
-    events[f'weightcorr_{name}_MuID_LooseISO_ptgt120_syst_Up_rel'] = ak.concatenate([ak.unflatten(ISOsf_Above120_syst_Up_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_LooseISO_ptgt120_syst_Down_rel'] = ak.concatenate([ak.unflatten(ISOsf_Above120_syst_Down_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    #stat
-    ISOsf_Above120_stat_Up_rel = (ISOsf_Above120 + ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'stat'))/ISOsf_Above120
-    ISOsf_Above120_stat_Down_rel = (ISOsf_Above120 - ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(ak.to_numpy(abs(Sel_Muon.eta[nlepAbove120])), ak.to_numpy(Sel_Muon.pt[nlepAbove120]), 'stat'))/ISOsf_Above120
-    events[f'weightcorr_{name}_MuID_LooseISO_ptgt120_stat_{period}_Up_rel'] = ak.concatenate([ak.unflatten(ISOsf_Above120_stat_Up_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
-    events[f'weightcorr_{name}_MuID_LooseISO_ptgt120_stat_{period}_Down_rel'] = ak.concatenate([ak.unflatten(ISOsf_Above120_stat_Down_rel, nlepAbove120*1),
-                                                                             ak.unflatten(np.ones(len(~nlepAbove120))[~nlepAbove120], ~nlepAbove120*1), 
-                                                                             ], axis=1) 
+    IDsf_Below120 = (ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, 'nominal'))
+    IDsf_Below120_syst_Up_rel =   (IDsf_Below120 + (ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "syst")))/IDsf_Below120
+    IDsf_Below120_syst_Down_rel = (IDsf_Below120 - (ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "syst")))/IDsf_Below120
+    IDsf_Below120_stat_Up_rel =   (IDsf_Below120 + (ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "stat")))/IDsf_Below120
+    IDsf_Below120_stat_Down_rel = (IDsf_Below120 - (ceval['NUM_MediumID_DEN_TrackerMuons'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "stat")))/IDsf_Below120
 
-    #sf_Above120_Up = ak.from_numpy(RECOsf_Above120_Up_rel*sf_Above120*IDsf_Above120_Up_rel*sf_Above120*ISOsf_Above120_Up_rel*sf_Above120)
-    #sf_Above120_Down = ak.from_numpy(RECOsf_Above120_Down_rel*sf_Above120*IDsf_Above120_Down_rel*sf_Above120*ISOsf_Above120_Down_rel*sf_Above120)
-    return sf_Above120 #, sf_Above120_Up, sf_Above120_Down
+    # for Mons with pt>120 GeV, custom tab from twiki because sf are not in muon_Z.json.
+    Muon_pt = (Sel_Muon.pt)
+    Muon_pt = np.where(Muon_pt<50, 50, Muon_pt)
+    IDevaluator_Above120 = correctionlib.CorrectionSet.from_file(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/muon/data/'+period+f'/ScaleFactors_Muon_highPt_IDISO_{Area_ref[period]}_schemaV2.json')
+    IDsf_Above120 = (IDevaluator_Above120["NUM_MediumID_DEN_GlobalMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'nominal'))
+    IDsf_Above120_syst_Up_rel =   (IDsf_Above120 + (IDevaluator_Above120["NUM_MediumID_DEN_GlobalMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'syst')))/IDsf_Above120
+    IDsf_Above120_syst_Down_rel = (IDsf_Above120 - (IDevaluator_Above120["NUM_MediumID_DEN_GlobalMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'syst')))/IDsf_Above120
+    IDsf_Above120_stat_Up_rel =   (IDsf_Above120 + (IDevaluator_Above120["NUM_MediumID_DEN_GlobalMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'stat')))/IDsf_Above120
+    IDsf_Above120_stat_Down_rel = (IDsf_Above120 - (IDevaluator_Above120["NUM_MediumID_DEN_GlobalMuonProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'stat')))/IDsf_Above120
 
-def get_electronRECOsf_Below20(events, Sel_Electron, name, period):
-    #RECO sf for e
+    ID_sf = np.where(nlepBelow120, IDsf_Below120,   IDsf_Above120)
+
+    #save in events
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_syst_Up_rel']    = np.where(nlepBelow120, IDsf_Below120_syst_Up_rel,   np.ones_like(ID_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_syst_Down_rel']  = np.where(nlepBelow120, IDsf_Below120_syst_Down_rel, np.ones_like(ID_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_stat_{period}_Up_rel']   = np.where(nlepBelow120, IDsf_Below120_stat_Up_rel,  np.ones_like(ID_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_stat_{period}_Down_rel'] = np.where(nlepBelow120, IDsf_Below120_stat_Down_rel, np.ones_like(ID_sf))
+
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_syst_Up_rel'] = np.where(nlepAbove120, IDsf_Above120_syst_Up_rel,   np.ones_like(ID_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_syst_Down_rel'] = np.where(nlepAbove120, IDsf_Above120_syst_Down_rel,   np.ones_like(ID_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_stat_{period}_Up_rel'] = np.where(nlepAbove120, IDsf_Above120_stat_Up_rel,   np.ones_like(ID_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_stat_{period}_Down_rel'] = np.where(nlepAbove120, IDsf_Above120_stat_Down_rel,   np.ones_like(ID_sf))
+
+    return ID_sf
+
+def weightcorr_MuID_LooseISO(events, Sel_Muon, name, ceval, period):
+    # ISO sf are split between muon with pt<120 GeV and above 120
+    nlepBelow120 = (Sel_Muon.pt <= 120)
+    nlepAbove120 = (Sel_Muon.pt > 120)
+
+    ISOsf_Below120 = (ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, 'nominal'))
+    ISOsf_Below120_syst_Up_rel =   (ISOsf_Below120 + (ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "syst")))/ISOsf_Below120
+    ISOsf_Below120_syst_Down_rel = (ISOsf_Below120 - (ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "syst")))/ISOsf_Below120
+    ISOsf_Below120_stat_Up_rel =   (ISOsf_Below120 + (ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "stat")))/ISOsf_Below120
+    ISOsf_Below120_stat_Down_rel = (ISOsf_Below120 - (ceval['NUM_LooseRelIso_DEN_MediumID'].evaluate(np.abs(Sel_Muon.eta), Sel_Muon.pt, "stat")))/ISOsf_Below120
+
+    # for Mons with pt>120 GeV, custom tab from twiki because sf are not in muon_Z.json. 
+    Muon_pt = (Sel_Muon.pt)
+    Muon_pt = np.where(Muon_pt<50, 50, Muon_pt)
+    ISOevaluator_Above120 = correctionlib.CorrectionSet.from_file(f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/muon/data/'+period+f'/ScaleFactors_Muon_highPt_IDISO_{Area_ref[period]}_schemaV2.json')
+    ISOsf_Above120 = (ISOevaluator_Above120["NUM_probe_LooseRelTkIso_DEN_MediumIDProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'nominal'))
+    ISOsf_Above120_syst_Up_rel =   (ISOsf_Above120 + (ISOevaluator_Above120["NUM_probe_LooseRelTkIso_DEN_MediumIDProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'syst')))/ISOsf_Above120
+    ISOsf_Above120_syst_Down_rel = (ISOsf_Above120 - (ISOevaluator_Above120["NUM_probe_LooseRelTkIso_DEN_MediumIDProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'syst')))/ISOsf_Above120
+    ISOsf_Above120_stat_Up_rel =   (ISOsf_Above120 + (ISOevaluator_Above120["NUM_probe_LooseRelTkIso_DEN_MediumIDProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'stat')))/ISOsf_Above120
+    ISOsf_Above120_stat_Down_rel = (ISOsf_Above120 - (ISOevaluator_Above120["NUM_probe_LooseRelTkIso_DEN_MediumIDProbes"].evaluate(np.abs(Sel_Muon.eta), Muon_pt, 'stat')))/ISOsf_Above120
+
+    ISO_sf = np.where(nlepBelow120, ISOsf_Below120,   ISOsf_Above120)
+
+    #save in events
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_syst_Up_rel']    = np.where(nlepBelow120, ISOsf_Below120_syst_Up_rel,   np.ones_like(ISO_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_syst_Down_rel']  = np.where(nlepBelow120, ISOsf_Below120_syst_Down_rel, np.ones_like(ISO_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_stat_{period}_Up_rel']   = np.where(nlepBelow120, ISOsf_Below120_stat_Up_rel,  np.ones_like(ISO_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptlt120_stat_{period}_Down_rel'] = np.where(nlepBelow120, ISOsf_Below120_stat_Down_rel, np.ones_like(ISO_sf))
+
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_syst_Up_rel'] = np.where(nlepAbove120, ISOsf_Above120_syst_Up_rel,   np.ones_like(ISO_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_syst_Down_rel'] = np.where(nlepAbove120, ISOsf_Above120_syst_Down_rel,   np.ones_like(ISO_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_stat_{period}_Up_rel'] = np.where(nlepAbove120, ISOsf_Above120_stat_Up_rel,   np.ones_like(ISO_sf))
+    events[f'weightcorr_{name}_MuID_MediumID_ptgt120_stat_{period}_Down_rel'] = np.where(nlepAbove120, ISOsf_Above120_stat_Down_rel,   np.ones_like(ISO_sf))
+
+    return ISO_sf
+
+def weightcorr_EleID_RECO(events, Sel_Electron, name, period):
     file_name = {
         '2018': 'UL2018',
         '2017': 'UL2017',
         '2016': 'UL2016postVFP',
         '2016_HIPM': 'UL2016preVFP',
     }
-    fReco_path_ptBelow20 = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/{period}/electron/egammaEffi_ptBelow20-txt_EGM2D_{file_name[period]}_witherr.root' 
+    # RECO sf are split between electron with pt<20 GeV and above 20
+    nlepBelow20 = (Sel_Electron.pt <= 20)
+    nlepAbove20 = (Sel_Electron.pt > 20)
+
+    # for Electron with pt<20 GeV
+    fReco_path_ptBelow20 = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/electron/data/{period}/egammaEffi_ptBelow20-txt_EGM2D_{file_name[period]}_witherr.root' 
     evaluator_Below20 = get_scales_fromjson(fReco_path_ptBelow20)
-    mask_Below20 = Sel_Electron.pt<20
-    RECOsf_Below20 = evaluator_Below20["EGamma_SF2D"](Sel_Electron.pt[mask_Below20], Sel_Electron.eta[mask_Below20])
-    RECOsf_Below20_err = evaluator_Below20["EGamma_SF2D_err"](Sel_Electron.pt[mask_Below20], Sel_Electron.eta[mask_Below20])
+    RECOsf_Below20 = evaluator_Below20["EGamma_SF2D"]((Sel_Electron.pt), (Sel_Electron.eta))
+    RECOsf_Below20_err = evaluator_Below20["EGamma_SF2D_err"]((Sel_Electron.pt), (Sel_Electron.eta))
     RECOsf_Below20_Up = RECOsf_Below20 + RECOsf_Below20_err
     RECOsf_Below20_Down = RECOsf_Below20 - RECOsf_Below20_err
-    return RECOsf_Below20, RECOsf_Below20_Up, RECOsf_Below20_Down
 
-def get_electronRECOsf_Above20(events, Sel_Electron, name, period):
-    #RECO sf for e
-    file_name = {
-        '2018': 'UL2018',
-        '2017': 'UL2017',
-        '2016': 'UL2016postVFP',
-        '2016_HIPM': 'UL2016preVFP',
-    }
-    #RECO sf for e
-    fReco_path_ptAbove20 = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/{period}/electron/egammaEffi_ptAbove20-txt_EGM2D_{file_name[period]}_witherr.root' 
+    # for Electron with pt>20 GeV
+    fReco_path_ptAbove20 = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/electron/data/{period}/egammaEffi_ptAbove20-txt_EGM2D_{file_name[period]}_witherr.root' 
     evaluator_Above20 = get_scales_fromjson(fReco_path_ptAbove20)
-    mask_Above20 = Sel_Electron.pt >= 20
-    e_pt = ak.to_numpy(Sel_Electron.pt[mask_Above20])
-    e_pt = np.where(e_pt>500, 500, e_pt)
-    RECOsf_Above20 = evaluator_Above20["EGamma_SF2D"](e_pt, ak.to_numpy(Sel_Electron.eta[mask_Above20]))
-    RECOsf_Above20_err = evaluator_Above20["EGamma_SF2D_err"](e_pt, ak.to_numpy(Sel_Electron.eta[mask_Above20]))
+    Electron_pt = (Sel_Electron.pt)
+    Electron_pt = np.where(Electron_pt>500, 500, Electron_pt)
+    RECOsf_Above20 = evaluator_Above20["EGamma_SF2D"](Electron_pt, (Sel_Electron.eta))
+    RECOsf_Above20_err = evaluator_Above20["EGamma_SF2D_err"](Electron_pt, (Sel_Electron.eta))
     RECOsf_Above20_Up = RECOsf_Above20 + RECOsf_Above20_err
     RECOsf_Above20_Down = RECOsf_Above20 - RECOsf_Above20_err
-    return  RECOsf_Above20, RECOsf_Above20_Up, RECOsf_Above20_Down
+
+    #combine SFs
+    RECO_sf = np.where(nlepBelow20, RECOsf_Below20,   RECOsf_Above20)
+    RECO_sf_Up_rel = np.where(nlepBelow20, RECOsf_Below20_Up,   RECOsf_Above20_Up)/RECO_sf
+    RECO_sf_Down_rel = np.where(nlepBelow20, RECOsf_Below20_Down,   RECOsf_Above20_Down)/RECO_sf
+    events[f'weightcorr_{name}_EleID_RECO_Up_rel'] = RECO_sf_Up_rel
+    events[f'weightcorr_{name}_EleID_RECO_Down_rel'] = RECO_sf_Down_rel
+
+    return RECO_sf
+
+def weightcorr_EleID_wp90noiso(events, Sel_Electron, name, ceval, period):
+    #ID sf for e
+    ceval = get_correction_central('electron', period)
+    ID_sf = ceval['UL-Electron-ID-SF'].evaluate(Area_dir[period][:-3], 'sf', 'wp90noiso', Sel_Electron.eta, Sel_Electron.pt)
+    events[f'weightcorr_{name}_EleID_wp90noiso_Up_rel'] = ceval['UL-Electron-ID-SF'].evaluate(Area_dir[period][:-3], 'sfup', 'wp90noiso', Sel_Electron.eta, Sel_Electron.pt) / ID_sf
+    events[f'weightcorr_{name}_EleID_wp90noiso_Down_rel'] = ceval['UL-Electron-ID-SF'].evaluate(Area_dir[period][:-3], 'sfdown', 'wp90noiso', Sel_Electron.eta, Sel_Electron.pt) / ID_sf
+    return ID_sf
+
+def GetJetVetoMaps(events, period):
+    path_to_corr = f'{os.getenv("ANALYSIS_PATH")}/CoffeaAnalysis/corrections/JET/data/vetomaps/'
+    Area_veto = {
+        '2016_HIPM': 'Summer19UL16_V1',
+        '2016': 'Summer19UL16_V1',
+        '2017': 'Summer19UL17_V1',
+        '2018': 'Summer19UL18_V1'
+    }
+    fname = path_to_corr + Area_veto[period] + '_jetvetomaps.json'
+
+    # Grab the json
+    ceval = correctionlib.CorrectionSet.from_file(fname)
+
+    #Loose jets as recommended in https://cms-jerc.web.cern.ch/Recommendations/#run-2_2
+    Is_Loose_jets = (events.Jet.pt > 15.) & (events.Jet.jetId >= 2) & ak.where(events.Jet.pt<50, events.Jet.puId >= 6,  events.Jet.puId >= 0)
+
+    # Flatten the inputs
+    eta_flat = ak.flatten(events.Jet.eta)
+    phi_flat = ak.flatten(events.Jet.phi)
+
+    #Put mins and maxes on the accepted values
+    eta_flat_bound = ak.where(eta_flat>5.19,5.19,ak.where(eta_flat<-5.19,-5.19,eta_flat))
+    phi_flat_bound = ak.where(phi_flat>3.14159,3.14159,ak.where(phi_flat<-3.14159,-3.14159,phi_flat))
+
+    #Get pass/fail values for each jet (0 is pass and >0 is fail)
+    jet_vetomap_flat = (ceval[Area_veto[period]].evaluate('jetvetomap',eta_flat_bound,phi_flat_bound) == 0)
+
+    #Unflatten the array
+    jet_vetomap = (ak.unflatten(jet_vetomap_flat,ak.num(events.Jet.phi))) | ~Is_Loose_jets
+
+    return jet_vetomap
+
+def MET_correction(MET, old_obj, corr_obj):
+    """
+    Correct the MET based on changes to an object (can be tau, jet, ...) transverse momentum.
+    This function supports collections of objects for each event.
+
+    Parameters:
+    - MET (dict): Original MET with 'pt' and 'phi'.
+    - old_obj (object): Collection of objects with original 'pt' and 'phi'.
+    - corr_obj (object): Collection of objects with corrected 'pt' and 'phi'.
+
+    Returns:
+    - corrected_met (dict): Corrected MET with 'pt' and 'phi'.
+    """
+    # Compute original MET components
+    met_x = MET['pt'] * np.cos(MET['phi'])
+    met_y = MET['pt'] * np.sin(MET['phi'])
+    
+    # Compute old and new obj momentum components
+    obj_px_old = old_obj.pt * np.cos(old_obj.phi)
+    obj_py_old = old_obj.pt * np.sin(old_obj.phi)
+    obj_px_new = corr_obj.pt * np.cos(corr_obj.phi)
+    obj_py_new = corr_obj.pt * np.sin(corr_obj.phi)
+    
+    # Compute the change in obj momentum (sum over all objects per event if collection)
+    delta_px = ak.sum(obj_px_old - obj_px_new, axis=-1)
+    delta_py = ak.sum(obj_py_old - obj_py_new, axis=-1)
+    
+    # Apply the correction to MET components
+    met_x_corrected = met_x + delta_px
+    met_y_corrected = met_y + delta_py
+    
+    # Recompute corrected MET magnitude and phi
+    corrected_met = MET
+    corrected_met['pt'] = np.sqrt(met_x_corrected**2 + met_y_corrected**2)
+    corrected_met['phi'] = np.arctan2(met_y_corrected, met_x_corrected)
+    
+    return corrected_met

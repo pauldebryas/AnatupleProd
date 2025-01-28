@@ -1,0 +1,2 @@
+produce_run_Data.py produce files where run number of data samples used are stored (request on DAQ)
+We also need to load golden lumi csv files from LUMI POG: https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2 in data/goldenrunAndLumi/ folder

@@ -42,10 +42,10 @@ def files_from_path(path):
 def cleanup_ds(ds, output_tmp_folder, output_root_folder):
     ''' Hadd and then move anatuple rootfiles from tmp folder to CoffeaAnalysis/results
     '''
-    debug_mode = True
+    debug_mode = False
 
     if debug_mode == True:
-        print('processing '+ ds)
+        print('Apply cleanup_ds to '+ ds)
 
     if not os.path.exists(output_tmp_folder):
         os.makedirs(output_tmp_folder)
