@@ -154,12 +154,12 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
     
     def load_dataHLT(self):
         #adding data to the branches
-        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte','tte_DiTau', 'QCDe', 'QCDmu', 'Zmu']:
+        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte','tte_DiTau']:
             raise RuntimeError(f"Incorrect channel name: {self.channel}")
 
-        if self.channel in ['ttm','tmm','tem', 'QCDmu', 'Zmu']:
+        if self.channel in ['ttm','tmm','tem']:
             self.dataHLT='SingleMuon'
-        if self.channel in ['tee', 'tte','QCDe']:
+        if self.channel in ['tee', 'tte']:
             if self.periods == '2018':
                 self.dataHLT='EGamma'
             else:

@@ -4,7 +4,7 @@ from coffea import processor
 from collections import defaultdict
 import copy
 
-from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
+from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event, add_gen_matching_info
 from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_e, compute_sf_tau, get_trigger_correction_e, compute_sf_L1PreFiring, get_pileup_correction, get_BTag_sf
 from CoffeaAnalysis.HNLAnalysis.helpers import IsoElectron_mask, Trigger_Electron_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
@@ -240,6 +240,11 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
 
         if self.mode == 'signal':
             lst['HNLmass'] = np.ones(len(events))*int(self.ds[self.ds.rfind("-") + 1:])
+        # save GenPart info in case MC sample
+        if self.mode != 'Data':
+            Sel_Electron = add_gen_matching_info(events, Sel_Electron)
+            Sel_Electron2  = add_gen_matching_info(events, Sel_Electron2)
+            Sel_Tau = add_gen_matching_info(events, Sel_Tau)
         
         #order electron by pt
         mask_ptmax = Sel_Electron.pt >= Sel_Electron2.pt

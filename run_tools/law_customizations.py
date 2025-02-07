@@ -105,7 +105,18 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     configuration is required.
     """
 
-    max_runtime = law.DurationParameter(default=12.0, unit="h", significant=False, description="maximum runtime, default unit is hours, default: 12")
+    max_runtime = law.DurationParameter(
+        default=12.0, 
+        unit="h", 
+        significant=False, 
+        description="maximum runtime, default unit is hours, default: 12"
+    )
+
+    transfer_logs = luigi.BoolParameter(
+        default=True,
+        significant=False,
+        description="transfer job logs to the output directory; default: True",
+    )
 
     def htcondor_output_directory(self):
         # the directory where submission meta data should be stored
@@ -130,7 +141,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
         log_path = os.path.join(ana_data_path, "logs")
         os.makedirs(log_path, exist_ok=True)
-        config.custom_content.append(("log", os.path.join(log_path, f'job.$(ClusterId).{branches}.log')))
-        config.custom_content.append(("output", os.path.join(log_path, f'job.$(ClusterId).{branches}.out')))
-        config.custom_content.append(("error", os.path.join(log_path, f'job.$(ClusterId).{branches}.err')))
+        config.custom_content.append(("log", os.path.join(log_path, f'job.$(ClusterId).{job_num}.log')))
+        config.custom_content.append(("output", os.path.join(log_path, f'job.$(ClusterId).{job_num}.out')))
+        config.custom_content.append(("error", os.path.join(log_path, f'job.$(ClusterId).{job_num}.err')))
         return config

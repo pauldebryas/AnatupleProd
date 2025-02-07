@@ -4,7 +4,7 @@ from coffea import processor
 from collections import defaultdict
 import copy
 
-from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
+from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event, add_gen_matching_info
 from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_mu, compute_sf_tau, get_trigger_correction_mu, compute_sf_L1PreFiring, get_pileup_correction, get_BTag_sf
 from CoffeaAnalysis.HNLAnalysis.helpers import IsoMuon_mask, Trigger_Muon_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
@@ -58,9 +58,9 @@ class HNLAnalysis_ttm(processor.ProcessorABC, HNLProcessor):
         # Save anatuple
         save_file, lst = self.save_anatuple_ttm(events_ttm, Sel_Muon, Sel_Tau1, Sel_Tau2, self.tag, save_weightcorr=True)
         save_Event(save_file, lst, 'Events')
+
         if self.mode != 'Data':
             save_bjets(save_file, events_ttm) #for bTagSF
-
         if self.mode != 'Data':
             Tau_ES_corr_list = ['DM0', 'DM1', '3prong']
             # Compute Tau_ES for genuineTau
@@ -218,6 +218,10 @@ class HNLAnalysis_ttm(processor.ProcessorABC, HNLProcessor):
 
         if self.mode == 'signal':
             lst['HNLmass'] = np.ones(len(events))*int(self.ds[self.ds.rfind("-") + 1:])
+        if self.mode != 'Data':
+            Sel_Muon = add_gen_matching_info(events, Sel_Muon)
+            Sel_Tau1  = add_gen_matching_info(events, Sel_Tau1)
+            Sel_Tau2 = add_gen_matching_info(events, Sel_Tau2)
 
         #order tau by pt
         mask_ptmax = Sel_Tau1.pt >= Sel_Tau2.pt

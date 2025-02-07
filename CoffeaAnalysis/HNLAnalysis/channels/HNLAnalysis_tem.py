@@ -4,7 +4,7 @@ from coffea import processor
 from collections import defaultdict
 import copy
 
-from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event
+from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_common, save_anatuple_lepton, save_anatuple_tau, save_bjets, save_Event, add_gen_matching_info
 from CoffeaAnalysis.HNLAnalysis.correction_helpers import compute_sf_tau, compute_sf_mu, compute_sf_e, get_trigger_correction_mu, compute_sf_L1PreFiring, get_pileup_correction, get_BTag_sf
 from CoffeaAnalysis.HNLAnalysis.helpers import IsoMuon_mask, IsoElectron_mask, Trigger_Muon_sel, FinalTau_sel, delta_r, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
@@ -234,6 +234,11 @@ class HNLAnalysis_tem(processor.ProcessorABC, HNLProcessor):
 
         if self.mode == 'signal':
             lst['HNLmass'] = np.ones(len(events))*int(self.ds[self.ds.rfind("-") + 1:])
+        # save GenPart info in case MC sample
+        if self.mode != 'Data':
+            Sel_Muon = add_gen_matching_info(events, Sel_Muon)
+            Sel_Electron  = add_gen_matching_info(events, Sel_Electron)
+            Sel_Tau = add_gen_matching_info(events, Sel_Tau)
 
         lst = save_anatuple_lepton(Sel_Muon, lst, exclude_list, 'Muon')
         lst = save_anatuple_lepton(Sel_Electron, lst, exclude_list, 'Electron')

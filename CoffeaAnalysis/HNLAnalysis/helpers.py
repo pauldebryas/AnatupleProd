@@ -226,7 +226,7 @@ def bjet_candidates(events, Lepton1, Lepton2, Lepton3, period, delta_r_cut = 0.5
     #loose WP value
     deepJet_wp_value = cset["deepJet_wp_values"].evaluate("L")
     
-    jets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.eta > -2.5) & (events.Jet.jetId >= 2)]
+    jets_candidates = events.SelJet[(events.SelJet.pt > 20.) & (events.SelJet.eta < 2.5) & (events.SelJet.eta > -2.5) & (events.SelJet.jetId >= 2)]
     drcut_jetslep1 = delta_r(Lepton1,jets_candidates) > delta_r_cut
     drcut_jetslep2 = delta_r(Lepton2,jets_candidates) > delta_r_cut
     drcut_jetslep3 = delta_r(Lepton3,jets_candidates) > delta_r_cut
@@ -307,8 +307,8 @@ def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
             "genWeight": np.array(events.genWeight),
             "luminosityBlock": np.array(events.luminosityBlock),
             "run": np.array(events.run),
-            "MET_pt": np.array(events.MET['pt']),
-            "MET_phi": np.array(events.MET['phi']),
+            "MET_pt": np.array(events.SelMET['pt']),
+            "MET_phi": np.array(events.SelMET['phi']),
             "nbjetsLoose": np.array(events.nbjetsLoose),
             "nbjetsLooseWithoutdRTau": np.array(events.nbjetsLooseWithoutdRTau)
         }
@@ -324,7 +324,8 @@ def save_anatuple_lepton(Sel_Lep, lst, exclude_list, name):
     ''' Update the list with all the informations contains in Sel_Lep object (not in exclude_list)
         name: name of the branch in the rootfile
     '''
-    #save Lepton info (work for Muon/electron)
+    #also add cone corrected p_t
+    Sel_Lep[f"ConeCorrectedPt"] = Sel_Lep.pt*(1+Sel_Lep.pfRelIso03_all)
     for field in Sel_Lep.fields:
         if field not in exclude_list:
             lst[f"{name}_{field}"] = np.array(Sel_Lep[field])
@@ -337,7 +338,7 @@ def matching_jet(events, Tau):
     '''
     jetIdx = ak.to_numpy(ak.unflatten(Tau.jetIdx, 1)).data
     jetIdx[jetIdx < 0] = 0
-    Jet = events.Jet[ak.local_index(events.Jet) == jetIdx]
+    Jet = events.SelJet[ak.local_index(events.SelJet) == jetIdx]
 
     Jet['valid'] = Tau.jetIdx >= 0
     return Jet
@@ -364,6 +365,7 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
         Sel_Tau['isPrompt'] = np.array(ak.flatten((GenTauMatch.statusFlags & (1 << 0)) != 0)) #isPrompt
         Sel_Tau['isDirectPromptTauDecayProduct'] = np.array(ak.flatten((GenTauMatch.statusFlags & (1 << 5)) != 0)) #isDirectPromptTauDecayProduct
     #save Tau info
+    Sel_Tau['pfRelIso03_all'] = Sel_Tau.rawIsodR03
     lst = save_anatuple_lepton(Sel_Tau, lst, exclude_list, name)
 
     #save matching Jet info
@@ -557,93 +559,34 @@ def Trigger_Electron_sel(events, period):
 
     return events, Sel_Electron
 
-def invariant_mass(lep1, lep2):
+def add_gen_matching_info(events, lepton):
     """
-    Calculate the invariant mass of two leptons.
+    Adds GenPart matching information to the specified object collection in an Awkward array.
+
     Parameters:
-        lep1, lep2: awkward arrays with px, py, pz, and energy components.
+        events (ak.Array): The Awkward array containing NanoAOD events.
+        lepton (ak.Array): The collection of the lepton.
+
     Returns:
-        Invariant mass array.
+        ak.Array: The updated lepton array with GenPart matching information.
     """
-    return np.sqrt(2*lep1.pt*lep2.pt*(np.cosh(lep1.eta-lep2.eta) - np.cos(lep1.phi-lep2.phi)))
+    genparts = events['GenPart']
 
-def ll_from_Z_sel(events):
-    """
-    Filters events with two leptons (muons or electrons) satisfying:
-        - Invariant mass of 91.2 ± 15 GeV
-        - Opposite charges
-    Selects the pair with invariant mass closest to the Z mass (91.2 GeV).
-    
-    Parameters:
-        events: awkward array of NanoEvent objects.
-    Returns:
-        Tuple (events, lepton1, lepton2) where lepton1 and lepton2 
-        are the filtered lepton collections.
-    """
-    # Define lepton collections
-    muons = events.SelMuon
-    electrons = events.SelElectron
+    # Get the GenPart indices from the object collection
+    gen_indices = lepton.genPartIdx
 
-    # Combine all potential pairs of muons
-    muon_pairs = ak.combinations(muons, 2, fields=["lep1", "lep2"])
-    electron_pairs = ak.combinations(electrons, 2, fields=["lep1", "lep2"])
+    matched_part = genparts[ak.local_index(genparts, axis=1) == gen_indices]
 
-    # Filter pairs for opposite sign and invariant mass criteria
-    def filter_pairs(pairs):
-        opp_sign = pairs.lep1.charge * pairs.lep2.charge < 0
-        inv_mass = invariant_mass(pairs.lep1, pairs.lep2)
-        z_mass_window = (inv_mass > 76.2) & (inv_mass < 106.2)
-        pairs = pairs[opp_sign & z_mass_window]
-        #pairs["inv_mass"] = inv_mass  # Add invariant mass for sorting later
-        return pairs
-    
-    valid_muon_pairs = filter_pairs(muon_pairs)
-    valid_electron_pairs = filter_pairs(electron_pairs)
+    # Mask invalid indices (e.g., -1 means no match)
+    valid_mask = (gen_indices >= 0) & (gen_indices < ak.num(genparts, axis=1))
+    matched_genparts = ak.mask(matched_part, valid_mask)  # Use ak.mask instead of ak.where
 
-    # Combine valid pairs
-    valid_pairs = ak.concatenate([valid_muon_pairs, valid_electron_pairs], axis=-1)
+    # List of GenPart attributes to keep
+    genpart_features = ["pt", "eta", "phi", "mass", "pdgId", "status", "statusFlags"]
 
-    # Select the events with valid pairs
-    cut = ak.num(valid_pairs) > 0
-    events_with_valid_pairs = events[cut]
-
-    # For each event, select the pair with invariant mass closest to 91.2 GeV
-    def closest_to_z_mass(pairs):
-        z_mass = 91.2
-        inv_mass = invariant_mass(pairs.lep1, pairs.lep2)
-        delta_mass = abs(inv_mass - z_mass)
-        best_pair_idx = ak.argmin(delta_mass, axis=1)
-        return pairs[best_pair_idx]
-
-    closest_pairs = closest_to_z_mass(valid_pairs[cut])
-
-    lepton1 = closest_pairs.lep1[:,0]
-    lepton2 = closest_pairs.lep2[:,0]
-
-    return events_with_valid_pairs, lepton1, lepton2
-
-def FinalLL_sel(events, Sel_Lepton1, Sel_Lepton2, lepton_type, delta_r_cut = 0.5):
-    ''' Select Light Lepton candidate with dr(Sel_Lepton1,Lepton)>0.5 and dr(Sel_Lepton2,Lepton)>0.5 
-        We take the one with the one with min isolation in case of ambiguity
-    '''
-
-    # Define lepton collections
-    if lepton_type == 'muon':
-        leptons = events.SelMuon
-    if lepton_type == 'electron':
-        leptons = events.SelElectron
-
-    LL_canditates = leptons[(delta_r(Sel_Lepton1, leptons) > delta_r_cut) & (delta_r(Sel_Lepton2,leptons)> delta_r_cut)]
-
-    #make sure at least 1 satisfy this condition
-    cut = ak.num(LL_canditates) >= 1
-    events = events[cut]
-    Sel_Lepton1 = Sel_Lepton1[cut]
-    Sel_Lepton2 = Sel_Lepton2[cut]
-    LL_canditates = LL_canditates[cut]
-
-    Sel_LL = LL_canditates[ak.min(LL_canditates.pfRelIso03_all, axis=-1) == LL_canditates.pfRelIso03_all]
-
-    Sel_LL = Sel_LL[:,0]
-
-    return events, Sel_Lepton1, Sel_Lepton2, Sel_LL
+    # Add GenPart attributes to the object collection with the naming convention
+    for feature in genpart_features:
+        feature_data = matched_genparts[feature]
+        # Preserve structure and ensure correct length
+        lepton[f"MatchingGenPart_{feature}"] = ak.fill_none(ak.firsts(feature_data), np.nan)      
+    return lepton
