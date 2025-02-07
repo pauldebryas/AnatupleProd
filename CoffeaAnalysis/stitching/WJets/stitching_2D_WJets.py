@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from coffea import processor
 from coffea.nanoevents import NanoAODSchema
-NanoAODSchema.warn_missing_crossrefs = True
+NanoAODSchema.warn_missing_crossrefs = False
 import numpy as np
 import json
 import collections
@@ -11,7 +11,7 @@ from CoffeaAnalysis.stitching.WJets.CountEventsWJets import CountEventsNJetsHT
 from CoffeaAnalysis.task_helpers import files_from_path
 
 # parameters ----------------------------------------------------------------------------
-period = '2016_HIPM'
+period = '2018'
 # ---------------------------------------------------------------------------------------
     
 file_dir = f'{os.getenv("CENTRAL_STORAGE_NANOAOD")}/Run2_{period}/'

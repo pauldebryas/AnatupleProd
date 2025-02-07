@@ -2,7 +2,7 @@
 __pycache__
 **/data/
 !**/data/.gitignore
-figures/*
+**/figures/
 .DS_Store
 __init__.py
 *.html

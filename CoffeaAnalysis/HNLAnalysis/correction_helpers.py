@@ -358,9 +358,10 @@ def compute_jet_corr(events, period, mode):
 
     inputs = {name: evaluator[name] for name in dir(evaluator)}
     stack = JECStack(inputs)
-    jetVetoMap = GetJetVetoMaps(events, period)
     
-    events["Jet","vetomap"] = jetVetoMap
+    jetVetoMap = GetJetVetoMaps(events, period)
+    events["SelJet","vetomap"] = jetVetoMap
+
     jets = events.SelJet
     jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
     jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
@@ -391,9 +392,11 @@ def compute_jet_corr(events, period, mode):
         name_map['ptGenJet'] = 'pt_gen'
 
     jet_factory = CorrectedJetsFactory(name_map, stack)
-    corrected_jets = jet_factory.build(jets, lazy_cache=events_cache)
-
-    return corrected_jets 
+    if len(jets) == 0:
+        return jets
+    else:
+        corrected_jets = jet_factory.build(jets, lazy_cache=events_cache)
+        return corrected_jets 
 
 
 #helpers ----------------------------------------------------------------------------------------------------------------------
@@ -636,11 +639,11 @@ def GetJetVetoMaps(events, period):
     ceval = correctionlib.CorrectionSet.from_file(fname)
 
     #Loose jets as recommended in https://cms-jerc.web.cern.ch/Recommendations/#run-2_2
-    Is_Loose_jets = (events.Jet.pt > 15.) & (events.Jet.jetId >= 2) & ak.where(events.Jet.pt<50, events.Jet.puId >= 6,  events.Jet.puId >= 0)
+    Is_Loose_jets = (events.SelJet.pt > 15.) & (events.SelJet.jetId >= 2) & ak.where(events.SelJet.pt<50, events.SelJet.puId >= 6,  events.SelJet.puId >= 0)
 
     # Flatten the inputs
-    eta_flat = ak.flatten(events.Jet.eta)
-    phi_flat = ak.flatten(events.Jet.phi)
+    eta_flat = ak.flatten(events.SelJet.eta)
+    phi_flat = ak.flatten(events.SelJet.phi)
 
     #Put mins and maxes on the accepted values
     eta_flat_bound = ak.where(eta_flat>5.19,5.19,ak.where(eta_flat<-5.19,-5.19,eta_flat))
@@ -650,7 +653,7 @@ def GetJetVetoMaps(events, period):
     jet_vetomap_flat = (ceval[Area_veto[period]].evaluate('jetvetomap',eta_flat_bound,phi_flat_bound) == 0)
 
     #Unflatten the array
-    jet_vetomap = (ak.unflatten(jet_vetomap_flat,ak.num(events.Jet.phi))) | ~Is_Loose_jets
+    jet_vetomap = (ak.unflatten(jet_vetomap_flat,ak.num(events.SelJet.phi))) | ~Is_Loose_jets
 
     return jet_vetomap
 

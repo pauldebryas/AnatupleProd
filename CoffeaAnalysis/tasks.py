@@ -46,7 +46,7 @@ class RunCounter(Task, HTCondorWorkflow, law.LocalWorkflow):
                     continue
                 if sample_name in self.excluded_samples[period]:
                     continue
-                path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{period}', sample_name))
+                path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{period}', samples[sample_name].get('HTTprodName')))
                 if os.path.exists(path_to_sample):
                     samples_list[sample_name] = files_from_path(path_to_sample)
                 else:
@@ -66,7 +66,7 @@ class RunCounter(Task, HTCondorWorkflow, law.LocalWorkflow):
 
         if self.debugMode:
             samples_list = random.sample(list(samples_list), 5)
-
+    
         event_counter_NotSelected = processor.run_uproot_job(
             samples_list,
             'EventsNotSelected',
@@ -96,7 +96,7 @@ class RunCounter(Task, HTCondorWorkflow, law.LocalWorkflow):
 class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
 
     tag = luigi.Parameter(default='TEST')
-    channel = luigi.Parameter(default='ttm')
+    channel = luigi.Parameter(default='Zmu')
     debugMode = luigi.BoolParameter(default=False)
 
     # requires RunCounter for scaling
@@ -124,7 +124,7 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
                     self.publish_message("Missing sampleType for sample: {}".format(sample_name))
                     raise RuntimeError("Missing sampleType has been detected.")
 
-                path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{period}', sample_name))
+                path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{period}', samples[sample_name].get('HTTprodName')))
                 if os.path.exists(path_to_sample):
                     files = files_from_path(path_to_sample)
                 else:
@@ -154,18 +154,16 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
     
     def load_dataHLT(self):
         #adding data to the branches
-        if self.channel not in ['ttm','tmm','tem', 'tee', 'ttt','tte','tte_DiTau', 'QCDe', 'QCDmu', 'Zmu']:
+        if self.channel not in ['Zmu', 'Ze']:
             raise RuntimeError(f"Incorrect channel name: {self.channel}")
 
-        if self.channel in ['ttm','tmm','tem', 'QCDmu', 'Zmu']:
+        if self.channel in ['Zmu']:
             self.dataHLT='SingleMuon'
-        if self.channel in ['tee', 'tte','QCDe']:
+        if self.channel in ['Ze']:
             if self.periods == '2018':
                 self.dataHLT='EGamma'
             else:
                 self.dataHLT='SingleElectron'
-        if self.channel in ['tte_DiTau', 'ttt']:
-            self.dataHLT='Tau'
         return
     def create_branch_map(self):
         self.load_dataHLT()

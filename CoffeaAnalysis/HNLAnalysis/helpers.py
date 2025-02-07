@@ -226,7 +226,7 @@ def bjet_candidates(events, Lepton1, Lepton2, Lepton3, period, delta_r_cut = 0.5
     #loose WP value
     deepJet_wp_value = cset["deepJet_wp_values"].evaluate("L")
     
-    jets_candidates = events.Jet[(events.Jet.pt > 20.) & (events.Jet.eta < 2.5) & (events.Jet.eta > -2.5) & (events.Jet.jetId >= 2)]
+    jets_candidates = events.SelJet[(events.SelJet.pt > 20.) & (events.SelJet.eta < 2.5) & (events.SelJet.eta > -2.5) & (events.SelJet.jetId >= 2)]
     drcut_jetslep1 = delta_r(Lepton1,jets_candidates) > delta_r_cut
     drcut_jetslep2 = delta_r(Lepton2,jets_candidates) > delta_r_cut
     drcut_jetslep3 = delta_r(Lepton3,jets_candidates) > delta_r_cut
@@ -307,8 +307,8 @@ def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
             "genWeight": np.array(events.genWeight),
             "luminosityBlock": np.array(events.luminosityBlock),
             "run": np.array(events.run),
-            "MET_pt": np.array(events.MET['pt']),
-            "MET_phi": np.array(events.MET['phi']),
+            "MET_pt": np.array(events.SelMET['pt']),
+            "MET_phi": np.array(events.SelMET['phi']),
             "nbjetsLoose": np.array(events.nbjetsLoose),
             "nbjetsLooseWithoutdRTau": np.array(events.nbjetsLooseWithoutdRTau)
         }
@@ -324,7 +324,8 @@ def save_anatuple_lepton(Sel_Lep, lst, exclude_list, name):
     ''' Update the list with all the informations contains in Sel_Lep object (not in exclude_list)
         name: name of the branch in the rootfile
     '''
-    #save Lepton info (work for Muon/electron)
+    #also add cone corrected p_t
+    Sel_Lep[f"ConeCorrectedPt"] = Sel_Lep.pt*(1+Sel_Lep.pfRelIso03_all)
     for field in Sel_Lep.fields:
         if field not in exclude_list:
             lst[f"{name}_{field}"] = np.array(Sel_Lep[field])
@@ -337,7 +338,7 @@ def matching_jet(events, Tau):
     '''
     jetIdx = ak.to_numpy(ak.unflatten(Tau.jetIdx, 1)).data
     jetIdx[jetIdx < 0] = 0
-    Jet = events.Jet[ak.local_index(events.Jet) == jetIdx]
+    Jet = events.SelJet[ak.local_index(events.SelJet) == jetIdx]
 
     Jet['valid'] = Tau.jetIdx >= 0
     return Jet
@@ -613,13 +614,16 @@ def ll_from_Z_sel(events):
         inv_mass = invariant_mass(pairs.lep1, pairs.lep2)
         delta_mass = abs(inv_mass - z_mass)
         best_pair_idx = ak.argmin(delta_mass, axis=1)
-        return pairs[best_pair_idx]
+        # Use ak.local_index to create indices per event
+        local_idx = ak.local_index(pairs, axis=1)
+        # Mask pairs where the index matches best_pair_idx
+        mask = local_idx == best_pair_idx[:, None]  # Expand dims to match shape
+        return pairs[mask]
 
     closest_pairs = closest_to_z_mass(valid_pairs[cut])
-
     lepton1 = closest_pairs.lep1[:,0]
     lepton2 = closest_pairs.lep2[:,0]
-
+    
     return events_with_valid_pairs, lepton1, lepton2
 
 def FinalLL_sel(events, Sel_Lepton1, Sel_Lepton2, lepton_type, delta_r_cut = 0.5):
@@ -647,3 +651,35 @@ def FinalLL_sel(events, Sel_Lepton1, Sel_Lepton2, lepton_type, delta_r_cut = 0.5
     Sel_LL = Sel_LL[:,0]
 
     return events, Sel_Lepton1, Sel_Lepton2, Sel_LL
+
+def add_gen_matching_info(events, lepton):
+    """
+    Adds GenPart matching information to the specified object collection in an Awkward array.
+
+    Parameters:
+        events (ak.Array): The Awkward array containing NanoAOD events.
+        lepton (ak.Array): The collection of the lepton.
+
+    Returns:
+        ak.Array: The updated lepton array with GenPart matching information.
+    """
+    genparts = events['GenPart']
+
+    # Get the GenPart indices from the object collection
+    gen_indices = lepton.genPartIdx
+
+    matched_part = genparts[ak.local_index(genparts, axis=1) == gen_indices]
+
+    # Mask invalid indices (e.g., -1 means no match)
+    valid_mask = (gen_indices >= 0) & (gen_indices < ak.num(genparts, axis=1))
+    matched_genparts = ak.mask(matched_part, valid_mask)  # Use ak.mask instead of ak.where
+
+    # List of GenPart attributes to keep
+    genpart_features = ["pt", "eta", "phi", "mass", "pdgId", "status", "statusFlags"]
+
+    # Add GenPart attributes to the object collection with the naming convention
+    for feature in genpart_features:
+        feature_data = matched_genparts[feature]
+        # Preserve structure and ensure correct length
+        lepton[f"MatchingGenPart_{feature}"] = ak.fill_none(ak.firsts(feature_data), np.nan)      
+    return lepton
