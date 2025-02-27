@@ -1,0 +1,720 @@
+DYJetsToLL_0J:
+  HNLprodName: DYJetsToLL_0J
+  HTTprodName: DYJetsToLL_0J-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_0J-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_0J-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_0J
+  miniAOD: /DYJetsToLL_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_1J:
+  HNLprodName: DYJetsToLL_1J
+  HTTprodName: DYJetsToLL_1J-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_1J-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_1J-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_1J
+  miniAOD: /DYJetsToLL_1J_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_1J_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_2J:
+  HNLprodName: DYJetsToLL_2J
+  HTTprodName: DYJetsToLL_2J-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_2J-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_2J-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_2J
+  miniAOD: /DYJetsToLL_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /DYJetsToLL_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_LHEFilterPtZ-0To50:
+  HNLprodName: DYJetsToLL_LHEFilterPtZ-0To50
+  HTTprodName: DYJetsToLL_LHEFilterPtZ-0To50-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-0To50-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-0To50-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_LHEFilterPtZ-0To50
+  miniAOD: /DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_LHEFilterPtZ-100To250:
+  HNLprodName: DYJetsToLL_LHEFilterPtZ-100To250
+  HTTprodName: DYJetsToLL_LHEFilterPtZ-100To250-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-100To250-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-100To250-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_LHEFilterPtZ-100To250
+  miniAOD: /DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_LHEFilterPtZ-250To400:
+  HNLprodName: DYJetsToLL_LHEFilterPtZ-250To400
+  HTTprodName: DYJetsToLL_LHEFilterPtZ-250To400-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-250To400-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-250To400-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_LHEFilterPtZ-250To400
+  miniAOD: /DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_LHEFilterPtZ-400To650:
+  HNLprodName: DYJetsToLL_LHEFilterPtZ-400To650
+  HTTprodName: DYJetsToLL_LHEFilterPtZ-400To650-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-400To650-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-400To650-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_LHEFilterPtZ-400To650
+  miniAOD: /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v4/MINIAODSIM
+  nanoAOD: /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_LHEFilterPtZ-50To100:
+  HNLprodName: DYJetsToLL_LHEFilterPtZ-50To100
+  HTTprodName: DYJetsToLL_LHEFilterPtZ-50To100-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-50To100-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-50To100-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_LHEFilterPtZ-50To100
+  miniAOD: /DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_LHEFilterPtZ-650ToInf:
+  HNLprodName: DYJetsToLL_LHEFilterPtZ-650ToInf
+  HTTprodName: DYJetsToLL_LHEFilterPtZ-650ToInf-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-650ToInf-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_LHEFilterPtZ-650ToInf-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_LHEFilterPtZ-650ToInf
+  miniAOD: /DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+DYJetsToLL_M-50:
+  HNLprodName: DYJetsToLL_M-50
+  HTTprodName: DYJetsToLL_M-50-amcatnloFXFX
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_M-50-amcatnloFXFX
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/DYJetsToLL_M-50-amcatnloFXFX/prodReport_nanoHTT.json
+  PhysicsType: DY
+  crossSection: DYJetsToLL_M-50
+  miniAOD: /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+EWKWMinus2Jets_WToLNu_M-50:
+  HNLprodName: EWKWMinus2Jets_WToLNu_M-50
+  HTTprodName: EWK_WminusToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/EWK_WminusToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/EWK_WminusToLNu/prodReport_nanoHTT.json
+  PhysicsType: EWK
+  crossSection: EWKWMinus2Jets_WToLNu_M-50
+  miniAOD: /EWKWMinus2Jets_WToLNu_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /EWKWMinus2Jets_WToLNu_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+EWKWPlus2Jets_WToLNu_M-50:
+  HNLprodName: EWKWPlus2Jets_WToLNu_M-50
+  HTTprodName: EWK_WplusToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/EWK_WplusToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/EWK_WplusToLNu/prodReport_nanoHTT.json
+  PhysicsType: EWK
+  crossSection: EWKWPlus2Jets_WToLNu_M-50
+  miniAOD: /EWKWPlus2Jets_WToLNu_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /EWKWPlus2Jets_WToLNu_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+EWKZ2Jets_ZToLL_M-50:
+  HNLprodName: EWKZ2Jets_ZToLL_M-50
+  HTTprodName: EWK_ZTo2L
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/EWK_ZTo2L
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/EWK_ZTo2L/prodReport_nanoHTT.json
+  PhysicsType: EWK
+  crossSection: EWKZ2Jets_ZToLL_M-50
+  miniAOD: /EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+GluGluHToTauTau:
+  HNLprodName: GluGluHToTauTau
+  HTTprodName: GluGluHToTauTau_M125
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/GluGluHToTauTau_M125
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/GluGluHToTauTau_M125/prodReport_nanoHTT.json
+  PhysicsType: Higgs
+  crossSection: GluGluHToTauTau
+  miniAOD: /GluGluHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v3/MINIAODSIM
+  nanoAOD: /GluGluHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ST_t-channel_antitop_4f_InclusiveDecays:
+  HNLprodName: ST_t-channel_antitop_4f_InclusiveDecays
+  HTTprodName: ST_t-channel_antitop_4f_InclusiveDecays
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_t-channel_antitop_4f_InclusiveDecays
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_t-channel_antitop_4f_InclusiveDecays/prodReport_nanoHTT.json
+  PhysicsType: SingleTop
+  crossSection: ST_t-channel_antitop_4f_InclusiveDecays
+  miniAOD: /ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ST_t-channel_top_4f_InclusiveDecays:
+  HNLprodName: ST_t-channel_top_4f_InclusiveDecays
+  HTTprodName: ST_t-channel_top_4f_InclusiveDecays
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_t-channel_top_4f_InclusiveDecays
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_t-channel_top_4f_InclusiveDecays/prodReport_nanoHTT.json
+  PhysicsType: SingleTop
+  crossSection: ST_t-channel_top_4f_InclusiveDecays
+  miniAOD: /ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ST_tW_antitop_5f_inclusiveDecays:
+  HNLprodName: ST_tW_antitop_5f_inclusiveDecays
+  HTTprodName: ST_tW_antitop_5f_InclusiveDecays
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_tW_antitop_5f_InclusiveDecays
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_tW_antitop_5f_InclusiveDecays/prodReport_nanoHTT.json
+  PhysicsType: SingleTop
+  crossSection: ST_tW_antitop_5f_inclusiveDecays
+  miniAOD: /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+ST_tW_top_5f_inclusiveDecays:
+  HNLprodName: ST_tW_top_5f_inclusiveDecays
+  HTTprodName: ST_tW_top_5f_InclusiveDecays
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_tW_top_5f_InclusiveDecays
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ST_tW_top_5f_InclusiveDecays/prodReport_nanoHTT.json
+  PhysicsType: SingleTop
+  crossSection: ST_tW_top_5f_inclusiveDecays
+  miniAOD: /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+SingleElectron_2017B:
+  HNLprodName: SingleElectron_2017B
+  HTTprodName: SingleElectron_Run2017B
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017B
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017B/prodReport_nanoHTT.json
+  miniAOD: /SingleElectron/Run2017B-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleElectron/Run2017B-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleElectron_2017C:
+  HNLprodName: SingleElectron_2017C
+  HTTprodName: SingleElectron_Run2017C
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017C
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017C/prodReport_nanoHTT.json
+  miniAOD: /SingleElectron/Run2017C-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleElectron/Run2017C-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleElectron_2017D:
+  HNLprodName: SingleElectron_2017D
+  HTTprodName: SingleElectron_Run2017D
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017D
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017D/prodReport_nanoHTT.json
+  miniAOD: /SingleElectron/Run2017D-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleElectron/Run2017D-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleElectron_2017E:
+  HNLprodName: SingleElectron_2017E
+  HTTprodName: SingleElectron_Run2017E
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017E
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017E/prodReport_nanoHTT.json
+  miniAOD: /SingleElectron/Run2017E-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleElectron/Run2017E-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleElectron_2017F:
+  HNLprodName: SingleElectron_2017F
+  HTTprodName: SingleElectron_Run2017F
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017F
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleElectron_Run2017F/prodReport_nanoHTT.json
+  miniAOD: /SingleElectron/Run2017F-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleElectron/Run2017F-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleMuon_2017B:
+  HNLprodName: SingleMuon_2017B
+  HTTprodName: SingleMuon_Run2017B
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017B
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017B/prodReport_nanoHTT.json
+  miniAOD: /SingleMuon/Run2017B-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleMuon/Run2017B-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleMuon_2017C:
+  HNLprodName: SingleMuon_2017C
+  HTTprodName: SingleMuon_Run2017C
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017C
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017C/prodReport_nanoHTT.json
+  miniAOD: /SingleMuon/Run2017C-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleMuon/Run2017C-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleMuon_2017D:
+  HNLprodName: SingleMuon_2017D
+  HTTprodName: SingleMuon_Run2017D
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017D
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017D/prodReport_nanoHTT.json
+  miniAOD: /SingleMuon/Run2017D-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleMuon/Run2017D-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleMuon_2017E:
+  HNLprodName: SingleMuon_2017E
+  HTTprodName: SingleMuon_Run2017E
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017E
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017E/prodReport_nanoHTT.json
+  miniAOD: /SingleMuon/Run2017E-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleMuon/Run2017E-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+SingleMuon_2017F:
+  HNLprodName: SingleMuon_2017F
+  HTTprodName: SingleMuon_Run2017F
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017F
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/SingleMuon_Run2017F/prodReport_nanoHTT.json
+  miniAOD: /SingleMuon/Run2017F-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /SingleMuon/Run2017F-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+TTTo2L2Nu:
+  HNLprodName: TTTo2L2Nu
+  HTTprodName: TTTo2L2Nu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTTo2L2Nu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTTo2L2Nu/prodReport_nanoHTT.json
+  PhysicsType: TT
+  crossSection: TTTo2L2Nu
+  miniAOD: /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTToHadronic:
+  HNLprodName: TTToHadronic
+  HTTprodName: TTToHadronic
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTToHadronic
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTToHadronic/prodReport_nanoHTT.json
+  PhysicsType: TT
+  crossSection: TTToHadronic
+  miniAOD: /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTToSemiLeptonic:
+  HNLprodName: TTToSemiLeptonic
+  HTTprodName: TTToSemiLeptonic
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTToSemiLeptonic
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTToSemiLeptonic/prodReport_nanoHTT.json
+  PhysicsType: TT
+  crossSection: TTToSemiLeptonic
+  miniAOD: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTWJetsToLNu:
+  HNLprodName: TTWJetsToLNu
+  HTTprodName: TTWJetsToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTWJetsToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTWJetsToLNu/prodReport_nanoHTT.json
+  PhysicsType: TTbosons
+  crossSection: TTWJetsToLNu
+  miniAOD: /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTWW:
+  HNLprodName: TTWW
+  HTTprodName: TTWW
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTWW
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTWW/prodReport_nanoHTT.json
+  PhysicsType: TTbosons
+  crossSection: TTWW
+  miniAOD: /TTWW_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTWW_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTWZ:
+  HNLprodName: TTWZ
+  HTTprodName: TTWZ
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTWZ
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTWZ/prodReport_nanoHTT.json
+  PhysicsType: TTbosons
+  crossSection: TTWZ
+  miniAOD: /TTWZ_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTWZ_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTZToLLNuNu_M-10:
+  HNLprodName: TTZToLLNuNu_M-10
+  HTTprodName: TTZToLLNuNu_M-10
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTZToLLNuNu_M-10
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTZToLLNuNu_M-10/prodReport_nanoHTT.json
+  PhysicsType: TTbosons
+  crossSection: TTZToLLNuNu_M-10
+  miniAOD: /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+TTZZ:
+  HNLprodName: TTZZ
+  HTTprodName: TTZZ
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTZZ
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/TTZZ/prodReport_nanoHTT.json
+  PhysicsType: TTbosons
+  crossSection: TTZZ
+  miniAOD: /TTZZ_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /TTZZ_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+Tau_2017B:
+  HNLprodName: Tau_2017B
+  HTTprodName: Tau_Run2017B
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017B
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017B/prodReport_nanoHTT.json
+  miniAOD: /Tau/Run2017B-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /Tau/Run2017B-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+Tau_2017C:
+  HNLprodName: Tau_2017C
+  HTTprodName: Tau_Run2017C
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017C
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017C/prodReport_nanoHTT.json
+  miniAOD: /Tau/Run2017C-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /Tau/Run2017C-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+Tau_2017D:
+  HNLprodName: Tau_2017D
+  HTTprodName: Tau_Run2017D
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017D
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017D/prodReport_nanoHTT.json
+  miniAOD: /Tau/Run2017D-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /Tau/Run2017D-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+Tau_2017E:
+  HNLprodName: Tau_2017E
+  HTTprodName: Tau_Run2017E
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017E
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017E/prodReport_nanoHTT.json
+  miniAOD: /Tau/Run2017E-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /Tau/Run2017E-UL2017_MiniAODv2_NanoAODv9-v2/NANOAOD
+  sampleType: data
+Tau_2017F:
+  HNLprodName: Tau_2017F
+  HTTprodName: Tau_Run2017F
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017F
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/Tau_Run2017F/prodReport_nanoHTT.json
+  miniAOD: /Tau/Run2017F-UL2017_MiniAODv2-v1/MINIAOD
+  nanoAOD: /Tau/Run2017F-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+  sampleType: data
+W1JetsToLNu:
+  HNLprodName: W1JetsToLNu
+  HTTprodName: W1JetsToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W1JetsToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W1JetsToLNu/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: W1JetsToLNu
+  miniAOD: /W1JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /W1JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+W2JetsToLNu:
+  HNLprodName: W2JetsToLNu
+  HTTprodName: W2JetsToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W2JetsToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W2JetsToLNu/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: W2JetsToLNu
+  miniAOD: /W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+W3JetsToLNu:
+  HNLprodName: W3JetsToLNu
+  HTTprodName: W3JetsToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W3JetsToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W3JetsToLNu/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: W3JetsToLNu
+  miniAOD: /W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+W4JetsToLNu:
+  HNLprodName: W4JetsToLNu
+  HTTprodName: W4JetsToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W4JetsToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/W4JetsToLNu/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: W4JetsToLNu
+  miniAOD: /W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+WJetsToLNu:
+  HNLprodName: WJetsToLNu
+  HTTprodName: WJetsToLNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu
+  miniAOD: /WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-100To200:
+  HNLprodName: WJetsToLNu_HT-100To200
+  HTTprodName: WJetsToLNu_HT-100To200
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-100To200
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-100To200/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-100To200
+  miniAOD: /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-1200To2500:
+  HNLprodName: WJetsToLNu_HT-1200To2500
+  HTTprodName: WJetsToLNu_HT-1200To2500
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-1200To2500
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-1200To2500/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-1200To2500
+  miniAOD: /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-200To400:
+  HNLprodName: WJetsToLNu_HT-200To400
+  HTTprodName: WJetsToLNu_HT-200To400
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-200To400
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-200To400/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-200To400
+  miniAOD: /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-2500ToInf:
+  HNLprodName: WJetsToLNu_HT-2500ToInf
+  HTTprodName: WJetsToLNu_HT-2500ToInf
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-2500ToInf
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-2500ToInf/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-2500ToInf
+  miniAOD: /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-400To600:
+  HNLprodName: WJetsToLNu_HT-400To600
+  HTTprodName: WJetsToLNu_HT-400To600
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-400To600
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-400To600/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-400To600
+  miniAOD: /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-600To800:
+  HNLprodName: WJetsToLNu_HT-600To800
+  HTTprodName: WJetsToLNu_HT-600To800
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-600To800
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-600To800/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-600To800
+  miniAOD: /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-70To100:
+  HNLprodName: WJetsToLNu_HT-70To100
+  HTTprodName: WJetsToLNu_HT-70To100
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-70To100
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-70To100/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-70To100
+  miniAOD: /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WJetsToLNu_HT-800To1200:
+  HNLprodName: WJetsToLNu_HT-800To1200
+  HTTprodName: WJetsToLNu_HT-800To1200
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-800To1200
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WJetsToLNu_HT-800To1200/prodReport_nanoHTT.json
+  PhysicsType: W
+  crossSection: WJetsToLNu_HT-800To1200
+  miniAOD: /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v3/NANOAODSIM
+  sampleType: mc
+WW:
+  HNLprodName: WW
+  HTTprodName: WW
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WW
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WW/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WW
+  miniAOD: /WW_TuneCP5_13TeV-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WW_TuneCP5_13TeV-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WWTo1L1Nu2Q:
+  HNLprodName: WWTo1L1Nu2Q
+  HTTprodName: WWTo1L1Nu2Q
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWTo1L1Nu2Q
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWTo1L1Nu2Q/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WWTo1L1Nu2Q
+  miniAOD: /WWTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WWTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WWTo2L2Nu:
+  HNLprodName: WWTo2L2Nu
+  HTTprodName: WWTo2L2Nu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWTo2L2Nu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWTo2L2Nu/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WWTo2L2Nu
+  miniAOD: /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+WWTo4Q:
+  HNLprodName: WWTo4Q
+  HTTprodName: WWTo4Q
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWTo4Q
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWTo4Q/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WWTo4Q
+  miniAOD: /WWTo4Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v3/MINIAODSIM
+  nanoAOD: /WWTo4Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WWW:
+  HNLprodName: WWW
+  HTTprodName: WWW_4F
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWW_4F
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWW_4F/prodReport_nanoHTT.json
+  PhysicsType: Triboson
+  crossSection: WWW
+  miniAOD: /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WWZ:
+  HNLprodName: WWZ
+  HTTprodName: WWZ_4F
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWZ_4F
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WWZ_4F/prodReport_nanoHTT.json
+  PhysicsType: Triboson
+  crossSection: WWZ
+  miniAOD: /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WZ:
+  HNLprodName: WZ
+  HTTprodName: WZ
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZ
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZ/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WZ
+  miniAOD: /WZ_TuneCP5_13TeV-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WZ_TuneCP5_13TeV-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WZTo1L1Nu2Q:
+  HNLprodName: WZTo1L1Nu2Q
+  HTTprodName: WZTo1L1Nu2Q
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZTo1L1Nu2Q
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZTo1L1Nu2Q/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WZTo1L1Nu2Q
+  miniAOD: /WZTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WZTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WZTo2Q2L:
+  HNLprodName: WZTo2Q2L
+  HTTprodName: WZTo2Q2L
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZTo2Q2L
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZTo2Q2L/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WZTo2Q2L
+  miniAOD: /WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+WZTo3LNu:
+  HNLprodName: WZTo3LNu
+  HTTprodName: WZTo3LNu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZTo3LNu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZTo3LNu/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: WZTo3LNu
+  miniAOD: /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+WZZ:
+  HNLprodName: WZZ
+  HTTprodName: WZZ
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZZ
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WZZ/prodReport_nanoHTT.json
+  PhysicsType: Triboson
+  crossSection: WZZ
+  miniAOD: /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WminusHToTauTau:
+  HNLprodName: WminusHToTauTau
+  HTTprodName: WminusHToTauTau_M125
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WminusHToTauTau_M125
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WminusHToTauTau_M125/prodReport_nanoHTT.json
+  PhysicsType: Higgs
+  crossSection: WminusHToTauTau
+  miniAOD: /WminusHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WminusHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+WplusHToTauTau:
+  HNLprodName: WplusHToTauTau
+  HTTprodName: WplusHToTauTau_M125
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WplusHToTauTau_M125
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/WplusHToTauTau_M125/prodReport_nanoHTT.json
+  PhysicsType: Higgs
+  crossSection: WplusHToTauTau
+  miniAOD: /WplusHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /WplusHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ZZ:
+  HNLprodName: ZZ
+  HTTprodName: ZZ
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZ
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZ/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: ZZ
+  miniAOD: /ZZ_TuneCP5_13TeV-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /ZZ_TuneCP5_13TeV-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ZZTo2L2Nu:
+  HNLprodName: ZZTo2L2Nu
+  HTTprodName: ZZTo2L2Nu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo2L2Nu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo2L2Nu/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: ZZTo2L2Nu
+  miniAOD: /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ZZTo2Q2L:
+  HNLprodName: ZZTo2Q2L
+  HTTprodName: ZZTo2Q2L
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo2Q2L
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo2Q2L/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: ZZTo2Q2L
+  miniAOD: /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ZZTo2Q2Nu:
+  HNLprodName: ZZTo2Q2Nu
+  HTTprodName: ZZTo2Q2Nu
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo2Q2Nu
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo2Q2Nu/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: ZZTo2Q2Nu
+  miniAOD: /ZZTo2Nu2Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /ZZTo2Nu2Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ZZTo4L:
+  HNLprodName: ZZTo4L
+  HTTprodName: ZZTo4L
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo4L
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo4L/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: ZZTo4L
+  miniAOD: /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM
+  sampleType: mc
+ZZTo4Q:
+  HNLprodName: ZZTo4Q
+  HTTprodName: ZZTo4Q
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo4Q
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZTo4Q/prodReport_nanoHTT.json
+  PhysicsType: Diboson
+  crossSection: ZZTo4Q
+  miniAOD: /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
+  nanoAOD: /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ZZZ:
+  HNLprodName: ZZZ
+  HTTprodName: ZZZ
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZZ
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ZZZ/prodReport_nanoHTT.json
+  PhysicsType: Triboson
+  crossSection: ZZZ
+  miniAOD: /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM
+  nanoAOD: /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc
+ttHToTauTau:
+  HNLprodName: ttHToTauTau
+  HTTprodName: ttHToTauTau_M125
+  HTTprodPath: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ttHToTauTau_M125
+  HTTprodReportFile: /eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2017/ttHToTauTau_M125/prodReport_nanoHTT.json
+  PhysicsType: Higgs
+  crossSection: ttHToTauTau
+  miniAOD: /ttHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v3/MINIAODSIM
+  nanoAOD: /ttHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+  sampleType: mc

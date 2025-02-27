@@ -10,7 +10,7 @@ from CoffeaAnalysis.HNLAnalysis.helpers import ll_from_Z_sel, FinalLL_sel
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 class HNLAnalysis_Zmu(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode):
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode, sample_name):
         HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode)
         self.acc_dict = {}
         self.selections = self.get_selections()
@@ -18,6 +18,7 @@ class HNLAnalysis_Zmu(processor.ProcessorABC, HNLProcessor):
             self.acc_dict[f'n_ev_{selection}'] = defaultdict(int)
             self.acc_dict[f'sumw_{selection}'] = defaultdict(int)
         self._accumulator = self.acc_dict
+        self.sample_name = sample_name
 
     @property
     def accumulator(self):
@@ -91,17 +92,17 @@ class HNLAnalysis_Zmu(processor.ProcessorABC, HNLProcessor):
     
     def save_anatuple_Zmu(self, events, lepton1, lepton2, SelMuon, tag):
 
-        path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.period}/{tag}/Zmu/{self.ds}/'
+        path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.period}/{tag}/Zmu/{self.sample_name}/'
 
         if not os.path.exists(path):
             os.makedirs(path)
 
-        save_file = path + f'{self.ds}_anatuple_0.root'
+        save_file = path + f'{self.sample_name}_anatuple_0.root'
 
         i = 0
         while os.path.isfile(save_file):
             i = i+1
-            save_file = path + f'{self.ds}_anatuple_{str(i)}.root'
+            save_file = path + f'{self.sample_name}_anatuple_{str(i)}.root'
 
 
         lst = { "event": np.array(events.event),

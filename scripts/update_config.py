@@ -2,6 +2,14 @@ import yaml
 import os
 import json
 
+'''
+Update config file.
+Config file initialy wrote for HNL Analysis channels
+Since we use HTT NanoAOD skimming files, we need to check wether the files produced are 
+from the same miniAOD. Of course no sample files were skimmed but since we need those anatuple
+for LLFF, we don't need them.
+'''
+
 def load_yaml(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -38,7 +46,7 @@ def check_folders(path):
     return list_folder
 
 # parameters
-period = '2018'
+period = '2017'
 config_yaml_file = f'config/samples_{period}_HNL.yaml'
 output_config_yaml_file = f'config/samples_{period}.yaml'
 NanoFiles_path = f'/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_{period}/'
@@ -69,6 +77,8 @@ for item_HNLprod in list(config_file_dict.keys()):
         item_HTTprod = 'EWK_ZTo2L'
     if item_HNLprod.startswith('EGamma_'):
         item_HTTprod = item_HNLprod[0:7] + 'Run' + item_HNLprod[7:]
+    if item_HNLprod.startswith('SingleElectron_'):
+        item_HTTprod = item_HNLprod[0:15] + 'Run' + item_HNLprod[15:]
     if item_HNLprod.startswith('SingleMuon_'):
         item_HTTprod = item_HNLprod[0:11] + 'Run' + item_HNLprod[11:]
     if item_HNLprod.startswith('Tau_'):

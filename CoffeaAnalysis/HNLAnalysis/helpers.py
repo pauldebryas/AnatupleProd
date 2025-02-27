@@ -283,6 +283,10 @@ def save_bjets(save_file, events):
 def save_Event(save_file, lst, Tree_name):
     ''' Save in a root file a Tree (Tree_name) containing lst
     '''
+    if len(lst['event']) == 0:
+        print('... 0 events to save')
+        return
+
     print(f'... saving events file {save_file}')
     with uproot.create(save_file, compression=uproot.ZLIB(4)) as file:
         file[Tree_name] = lst

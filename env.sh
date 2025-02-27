@@ -12,7 +12,7 @@ action() {
     export ANALYSIS_PATH="$this_dir"
     export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
     export X509_USER_PROXY="$ANALYSIS_DATA_PATH/voms.proxy"
-    export CENTRAL_STORAGE_ANATUPLE="/eos/user/p/pdebryas/HNL_copy"
+    export CENTRAL_STORAGE_ANATUPLE="/eos/user/p/pdebryas/HNL_LLFF"
     export CENTRAL_STORAGE_NANOAOD="/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1"
 
     export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts

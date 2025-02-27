@@ -6,6 +6,7 @@ import importlib
 import shutil
 import warnings
 import random
+import pickle
 
 #from coffea import dataset_tools
 from coffea.nanoevents import NanoAODSchema
@@ -13,7 +14,7 @@ NanoAODSchema.warn_missing_crossrefs = False
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from CoffeaAnalysis.HNLAnalysis.CountEvents import CountEvents
-from CoffeaAnalysis.task_helpers import files_from_path, cleanup_ds
+from CoffeaAnalysis.task_helpers import files_from_path, cleanup_ds, merge_pkl_files
 from run_tools.law_customizations import Task, HTCondorWorkflow
 from coffea import processor
 
@@ -92,8 +93,8 @@ class RunCounter(Task, HTCondorWorkflow, law.LocalWorkflow):
             event_counter['sumw_PUcorr'][sample] = event_counter_NotSelected['sumw_PUcorr'][sample] + event_counter_Selected['sumw_PUcorr'][sample]
 
         self.output().dump(event_counter)
-        
-class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
+
+class RunAnalysis(Task, HTCondorWorkflow, law.LocalWorkflow):
 
     tag = luigi.Parameter(default='TEST')
     channel = luigi.Parameter(default='Zmu')
@@ -106,52 +107,114 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
     def requires(self):
         return self.workflow_requires()
     
-    def load_samples(self):
-        # read config/samples_*.yalm input file and store useful information/branches
-        MC_branches = {}
-        data_samples_list = {}
+    def load_dataHLT(self):
+        #adding data to the branches
+        if self.channel not in ['Zmu', 'Ze']:
+            raise RuntimeError(f"Incorrect channel name: {self.channel}")
+        if self.channel in ['Zmu']:
+            self.dataHLT='SingleMuon'
+        if self.channel in ['Ze']:
+            if self.periods == '2018':
+                self.dataHLT='EGamma'
+            else:
+                self.dataHLT='SingleElectron'
+        return
     
-        self.load_sample_configs()
-        self.load_global_params()
-        self.load_xsecs()
-        branch_index = 0
-        for period, samples in self.samples.items():
-            for sample_name in sorted(samples.keys()):
-                if sample_name in self.excluded_samples[period]:
-                    continue
-                sampleType = samples[sample_name].get('sampleType', None)
-                if sampleType is None or len(sampleType) == 0:
-                    self.publish_message("Missing sampleType for sample: {}".format(sample_name))
-                    raise RuntimeError("Missing sampleType has been detected.")
-
-                path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{period}', samples[sample_name].get('HTTprodName')))
-                if os.path.exists(path_to_sample):
-                    files = files_from_path(path_to_sample)
-                else:
-                    self.publish_message("Missing sample path for sample: {}".format(path_to_sample))
-                    raise RuntimeError("Non existing sample path has been detected.")
-                
-                if sampleType != 'data':
-                    crossSection = samples[sample_name].get('crossSection', None)
-                    if crossSection is None or len(crossSection) == 0:
-                        self.publish_message("Missing crossSection reference for sample: {}".format(sample_name))
-                        raise RuntimeError("Missing crossSection has been detected.")
-                    else:
-                        get_Xsec = self.xsecs.get(crossSection, None)
-                        if type(get_Xsec) == str:
-                            #self.publish_message("Warning: crossSection format for sample: {}".format(sample_name))
-                            get_Xsec = eval(get_Xsec)
-                        if get_Xsec == None:
-                            self.publish_message(f"Warning: crossSection in crossSections13TeV.yaml missing for sample: {sample_name} ")
+    def create_branch_map(self):
+        files_to_pop ={
+            'TTToSemiLeptonic': ["/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_233.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_237.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_242.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_262.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_265.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_272.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_273.root"]
+        }
+        if not os.path.exists(os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'anatuple')):
+            os.makedirs(os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'anatuple'))
+        self.load_dataHLT()
+        # load MC branches 
+        data_samples_list , branches = self.load_samples(files_to_pop)
         
-                    output_file = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl', sample_name+str('_cutflow.pkl') )
-                    MC_branches[branch_index] = (sample_name, get_Xsec, sampleType, files, output_file)
-                    branch_index += 1
-                else:
-                    data_samples_list[sample_name] = files_from_path(path_to_sample)
-
-        return data_samples_list , MC_branches
+        branch_index = len(branches)
+        for data_sample in data_samples_list.keys():
+            if self.dataHLT in data_sample:
+                output_file = os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'anatuple', f'{data_sample}_anatuple.root')
+                branches[branch_index] = (data_sample, None, 'data', data_samples_list[data_sample], output_file, self.dataHLT)
+                branch_index = branch_index+1
+                #path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{self.periods}', data_sample.replace(f'{self.dataHLT}_', f'{self.dataHLT}_Run')))
+                #size_gb = get_size_in_gb(path_to_sample)
+                #print(f'{data_sample}: {size_gb}Gb')
+        #print(branches)
+        return branches
     
+    def output(self):
+        name, xsecs, sampleType, files, output_file, SampleName = self.branch_data
+        return self.local_analysis_target(output_file)
+
+    def run(self):
+        self.load_dataHLT()
+        name, xsecs, sampleType, files, output_file, SampleName = self.branch_data
+
+        samples_list = {}
+        if sampleType != 'data':
+            samples_list[SampleName] = files
+        else:
+            samples_list[name] = files
+
+        
+        if name == SampleName:
+            output_pkl_folder = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl')
+            output_root_folder = os.path.join(self.output_anatuple(), self.tag, self.channel, 'anatuple')
+        else:
+            output_pkl_folder = os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'cutflow_pkl')
+            output_root_folder = os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'anatuple')
+
+        if not os.path.exists(output_pkl_folder):
+            os.makedirs(output_pkl_folder)
+        if not os.path.exists(output_root_folder):
+            os.makedirs(output_root_folder)
+
+        output_tmp_folder = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.periods}/{self.tag}/{self.channel}/{name}/'
+        if os.path.exists(output_tmp_folder):
+            print(f'A tmp folder which store tmp anatuple files exist already for dataset {name}: being deleted')
+            shutil.rmtree(output_tmp_folder)
+
+        self.load_global_params()
+        stitched_list = self.stitched_samples[self.periods]
+        if stitched_list is None or len(stitched_list) == 0:
+            raise RuntimeError(f"Missing stitched_list in samples_{self.periods}.yaml")
+
+        module = importlib.import_module(f'CoffeaAnalysis.HNLAnalysis.channels.HNLAnalysis_{self.channel}')
+        HNLAnalysis = getattr(module, f'HNLAnalysis_{self.channel}')
+        my_processor = HNLAnalysis(stitched_list, self.tag, xsecs, self.periods, self.dataHLT, self.debugMode, name)
+
+        result = processor.run_uproot_job(
+            samples_list,
+            "Events",
+            my_processor,
+            processor.iterative_executor,
+            {"schema": NanoAODSchema, 'workers': 6},
+        )
+
+        # Save the result as a .pkl file
+        with open(os.path.join(output_pkl_folder,f'{name}_cutflow.pkl'), "wb") as f:
+            pickle.dump(result, f)
+
+        cleanup_ds(name, output_tmp_folder, output_root_folder)
+
+class RunPostProcess(Task, HTCondorWorkflow, law.LocalWorkflow):
+
+    tag = luigi.Parameter(default='TEST')
+    channel = luigi.Parameter(default='Zmu')
+
+    # requires Analysis
+    def workflow_requires(self):
+        return { "Analysis": RunAnalysis.req(self) }
+
+    def requires(self):
+        return self.workflow_requires()
+        
     def load_dataHLT(self):
         #adding data to the branches
         if self.channel not in ['Zmu', 'Ze']:
@@ -165,72 +228,92 @@ class Analysis(Task, HTCondorWorkflow, law.LocalWorkflow):
             else:
                 self.dataHLT='SingleElectron'
         return
-    def create_branch_map(self):
-        self.load_dataHLT()
-        # load MC branches 
-        data_samples_list , branches = self.load_samples()
-        branch_index = len(branches)
 
-        data_files = []
-        data_sample_name = []
+    def create_branch_map(self):
+
+        files_to_pop ={
+            'TTToSemiLeptonic': ["/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_233.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_237.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_242.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_262.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_265.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_272.root",
+                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_273.root"]
+        }
+
+        # load MC branches 
+        data_samples_list , branches_RunAnalysis = self.load_samples(files_to_pop)
+        self.load_dataHLT()
+
+        merged_files_list = {}
+        for i in range(len(branches_RunAnalysis)):
+            (name, get_Xsec, sampleType, files, output_file, sample_name) = branches_RunAnalysis[i]
+            if sample_name not in merged_files_list.keys():
+                merged_files_list[sample_name] = [output_file]
+            else:
+                merged_files_list[sample_name].append(output_file)
+
+        output_file_data = []
         for data_sample in data_samples_list.keys():
             if self.dataHLT in data_sample:
-                data_files.append(data_samples_list[data_sample])
-                data_sample_name.append(data_sample)
+                output_file_data.append(os.path.join(self.output_anatuple(), self.tag, 'tmp',self.channel, 'anatuple', f'{data_sample}_anatuple.root'))
+        merged_files_list[self.dataHLT] = output_file_data
 
-        output_file = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl', f'{self.dataHLT}_{self.periods}_cutflow.pkl')
-        branches[branch_index] = (data_sample_name, None, 'data', data_files, output_file)
+        branches = {}
+        i = 0
+        for sample_name, merged_files in merged_files_list.items():
+            if sample_name == self.dataHLT:
+                output_file = os.path.join(self.output_anatuple(), self.tag, self.channel, 'anatuple', f'{sample_name}_{self.periods}_anatuple.root')
+            else:
+                output_file = os.path.join(self.output_anatuple(), self.tag, self.channel, 'anatuple', f'{sample_name}_anatuple.root')
+            branches[i] = (sample_name, merged_files, output_file)
+            i = i+1
+
         #print(branches)
         return branches
     
     def output(self):
-        sample_name, xsecs, sampleType, files, output_file = self.branch_data
+        sample_name, merged_files, output_file = self.branch_data
         return self.local_analysis_target(output_file)
 
     def run(self):
-        self.load_dataHLT()
-        sample_name, xsecs, sampleType, files, output_file = self.branch_data
+        sample_name, merged_files_root, output_file_root = self.branch_data
 
-        samples_list = {}
-        if sampleType != 'data':
-            samples_list[sample_name] = files
-        else:
-            i=0
-            for sample in sample_name:
-                samples_list[sample] = files[i]
-                i = i+1
-            sample_name = f'{sample[0:-1]}'
+        merged_files_pkl = []
+        for file in merged_files_root:
+            output_pkl_folder = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl')
+            filename = file.split('/')[-1]
+            pkl_file = os.path.join(output_pkl_folder, filename.replace('_anatuple.root', '')+'_cutflow.pkl')
+            merged_files_pkl.append(pkl_file)
+        output_file_pkl = os.path.join(output_pkl_folder, f'{sample_name}_cutflow.pkl')
 
-        output_root_folder = os.path.join(self.output_anatuple(), self.tag, self.channel, 'anatuple')
-        if not os.path.exists(output_root_folder):
-            os.makedirs(output_root_folder)
+        # merge root files
+        print(f"Merge {len(merged_files_root)} files into {output_file_root}")
+        filelist_cmd = ''
+        for file in merged_files_root:
+            filelist_cmd = filelist_cmd + file + ' '
+        hadd_cmd = 'hadd -n 11 ' + output_file_root + ' ' + filelist_cmd 
+        print('Running the folowing command:')
+        print(hadd_cmd)
+        os.system(hadd_cmd)
+        print('')
 
-        output_pkl_folder = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl')
-        if not os.path.exists(output_pkl_folder):
-            os.makedirs(output_pkl_folder)
+        #merge pkl file
+        merge_pkl_files(merged_files_pkl, output_file_pkl)
+        print('')
 
-        output_tmp_folder = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.periods}/{self.tag}/{self.channel}/{sample_name}/'
-        if os.path.exists(output_tmp_folder):
-            print(f'A tmp folder which store tmp anatuple files exist already for dataset {sample_name}: being deleted')
-            shutil.rmtree(output_tmp_folder)
+        # remove root files
+        print('remove root files')
+        for file in merged_files_root:
+            print('Run the folowing command:')
+            print(f"os.remove({file})")
+            #os.remove(file)
+        print('')
 
-        self.load_global_params()
-        stitched_list = self.stitched_samples[self.periods]
-        if stitched_list is None or len(stitched_list) == 0:
-            raise RuntimeError(f"Missing stitched_list in samples_{self.periods}.yaml")
+        # remove pkl files
+        print('remove pkl files')
+        for file in merged_files_pkl:
+            print('Run the folowing command:')
+            print(f"os.remove({file})")
+            #os.remove(file)
 
-        module = importlib.import_module(f'CoffeaAnalysis.HNLAnalysis.channels.HNLAnalysis_{self.channel}')
-        HNLAnalysis = getattr(module, f'HNLAnalysis_{self.channel}')
-        my_processor = HNLAnalysis(stitched_list, self.tag, xsecs, self.periods, self.dataHLT, self.debugMode)
-
-        result = processor.run_uproot_job(
-            samples_list,
-            "Events",
-            my_processor,
-            processor.iterative_executor,
-            {"schema": NanoAODSchema, 'workers': 6},
-        )
-
-        self.output().dump(result)
-
-        cleanup_ds(sample_name, output_tmp_folder, output_root_folder)

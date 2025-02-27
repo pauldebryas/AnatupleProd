@@ -359,14 +359,14 @@ def compute_jet_corr(events, period, mode):
     inputs = {name: evaluator[name] for name in dir(evaluator)}
     stack = JECStack(inputs)
     
-    jetVetoMap = GetJetVetoMaps(events, period)
-    events["SelJet","vetomap"] = jetVetoMap
+    #jetVetoMap = GetJetVetoMaps(events, period)
+    #events["SelJet","vetomap"] = jetVetoMap
 
     jets = events.SelJet
     jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
     jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
     jets['PU_rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]
-    jets['vetoMap'] = jetVetoMap
+    #jets['vetoMap'] = jetVetoMap
     name_map = stack.blank_name_map
     name_map['JetPt'] = 'pt'
     name_map['JetEta'] = 'eta'
@@ -376,7 +376,7 @@ def compute_jet_corr(events, period, mode):
     name_map['ptRaw'] = 'pt_raw'
     name_map['massRaw'] = 'mass_raw'
     name_map['Rho'] = 'PU_rho'
-    name_map['vetoMap'] = 'vetoMap'
+    #name_map['vetoMap'] = 'vetoMap'
     name_map['METpt'] = 'pt'
     name_map['METphi'] = 'phi'
     name_map['UnClusteredEnergyDeltaX'] = 'MetUnclustEnUpDeltaX'
