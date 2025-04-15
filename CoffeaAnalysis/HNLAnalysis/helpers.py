@@ -283,6 +283,10 @@ def save_bjets(save_file, events):
 def save_Event(save_file, lst, Tree_name):
     ''' Save in a root file a Tree (Tree_name) containing lst
     '''
+    if len(lst['event']) == 0:
+        print('... 0 events to save')
+        return
+
     print(f'... saving events file {save_file}')
     with uproot.create(save_file, compression=uproot.ZLIB(4)) as file:
         file[Tree_name] = lst
@@ -302,7 +306,7 @@ def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
     while os.path.isfile(save_file):
         i = i+1
         save_file = path + f'{ds}_anatuple_{str(i)}.root'
-
+    
     lst = { "event": np.array(events.event),
             "genWeight": np.array(events.genWeight),
             "luminosityBlock": np.array(events.luminosityBlock),

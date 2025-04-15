@@ -230,7 +230,6 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
         return events
 
     def save_anatuple_tte(self, events, Sel_Electron, Sel_Tau1, Sel_Tau2, tag, save_weightcorr=True):
-
         exclude_list = ['genPartIdx']
         
         save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tte', save_weightcorr)
