@@ -92,7 +92,7 @@ class Task(law.Task):
                         if get_Xsec == None:
                             self.publish_message(f"Warning: crossSection in crossSections13TeV.yaml missing for sample: {sample_name} ")
         
-                    if size_gb >= 300:
+                    if size_gb >= 200:
                         SplitInt = 20
                         subFiles = split_list(files, SplitInt)
                         for nSubFile in range(SplitInt):
@@ -167,7 +167,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     """
 
     max_runtime = law.DurationParameter(
-        default=12.0, 
+        default=24.0, 
         unit="h", 
         significant=False, 
         description="maximum runtime, default unit is hours, default: 12"

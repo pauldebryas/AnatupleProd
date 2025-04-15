@@ -6,10 +6,10 @@ import copy
 import os
 
 from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_lepton, save_Event, add_gen_matching_info, bjet_candidates
-from CoffeaAnalysis.HNLAnalysis.helpers import ll_from_Z_sel, FinalLL_sel
+from CoffeaAnalysis.HNLAnalysis.helpers import OSOF_sel, FinalFakeCandidate_sel
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
-class HNLAnalysis_Ze(processor.ProcessorABC, HNLProcessor):
+class HNLAnalysis_llmu(processor.ProcessorABC, HNLProcessor):
     def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode, sample_name):
         HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode)
         self.acc_dict = {}
@@ -31,8 +31,8 @@ class HNLAnalysis_Ze(processor.ProcessorABC, HNLProcessor):
             'reweight',
             'MET_Filter',
             'lllsel',
-            'llinZ',
-            'eSel'
+            'emusel',
+            'muSel'
         ]
 
     # we will receive a NanoEvents
@@ -42,59 +42,60 @@ class HNLAnalysis_Ze(processor.ProcessorABC, HNLProcessor):
         events, out = self.init_process(out, events)
 
         # Do the general lepton selection
-        events_Ze = self.Lepton_selection(events)
+        events_llmu = self.Lepton_selection(events)
 
         # Apply the cuts and select leptons
-        events_Ze, lepton1, lepton2, Sel_e = self.analyse_Ze(events_Ze, out)
+        events_llmu, lepton1, lepton2, Sel_Mu = self.analyse_llmu(events_llmu, out)
 
         # save GenPart info in case MC sample
         if self.mode != 'Data':
-            lepton1 = add_gen_matching_info(events_Ze, lepton1)
-            lepton2 = add_gen_matching_info(events_Ze, lepton2)
-            Sel_e  = add_gen_matching_info(events_Ze, Sel_e)
+            lepton1 = add_gen_matching_info(events_llmu, lepton1)
+            lepton2 = add_gen_matching_info(events_llmu, lepton2)
+            Sel_Mu  = add_gen_matching_info(events_llmu, Sel_Mu)
 
         # Save anatuple
-        print(f'Saving {len(events_Ze)} events')
-        save_file, lst = self.save_anatuple_Ze(events_Ze, lepton1, lepton2, Sel_e, self.tag)
+        print(f'Saving {len(events_llmu)} events')
+        save_file, lst = self.save_anatuple_llmu(events_llmu, lepton1, lepton2, Sel_Mu, self.tag)
         
         save_Event(save_file, lst, 'Events')
 
         return out
 
-    def analyse_Ze(self, events, out):
-        # l1 and l2 should be 2 mu or 2 e with OS and m(l1,l2) ~ m_Z
-        # l3 is a e
+    def analyse_llmu(self, events, out):
+        # l1 and l2 should be OSOF light lepton and m(l1,l2) away from m_Z
+        # l3 is a mu 
 
-        # select lll events: require at least 3 reco e or 2 reco mu and 1 reco e
-        events_Ze = events[((ak.num(events.SelMuon) >= 2) & (ak.num(events.SelElectron) >= 1)) | (ak.num(events.SelElectron) >= 3)]
-        out[f'sumw_lllsel'][self.ds] += ak.sum(events_Ze.genWeight)
-        out[f'n_ev_lllsel'][self.ds] += len(events_Ze)
+        # select lll events: require at least 3 reco mu or 2 reco e and 1 reco mu
+        events_llmu = events[(ak.num(events.SelElectron) >= 1) & (ak.num(events.SelMuon) >= 2)]
+        out[f'sumw_lllsel'][self.ds] += ak.sum(events_llmu.genWeight)
+        out[f'n_ev_lllsel'][self.ds] += len(events_llmu)
 
         '''
-        Filters events with two leptons (muons or electrons) satisfying:
-            - Invariant mass of 91.2 ± 15 GeV
+        Filters events with two light leptons satisfying:
             - Opposite charges
-        Selects the pair with invariant mass closest to the Z mass (91.2 GeV).
+            - Opposite flavor
+            - l1/l2 iso < 0.15 
+        Selects the pair with smalest mean isolation.
         '''
-        events_Ze, lepton1, lepton2 = ll_from_Z_sel(events_Ze)
+        events_llmu, lepton1, lepton2 = OSOF_sel(events_llmu)
 
-        out[f'sumw_llinZ'][self.ds] += ak.sum(events_Ze.genWeight)
-        out[f'n_ev_llinZ'][self.ds] += len(events_Ze)
+        out[f'sumw_emusel'][self.ds] += ak.sum(events_llmu.genWeight)
+        out[f'n_ev_emusel'][self.ds] += len(events_llmu)
 
-        # select electron with dr(l1,e)>0.5 and dr(l2,e)>0.5 and minimum pfRelIso03_all in case of ambiguity
-        events_Ze, lepton1, lepton2, Sel_e = FinalLL_sel(events_Ze, lepton1, lepton2, 'electron')
+        # select Mu candidate with dr(l1,Muon)>0.5 and dr(l2,Muon)>0.5, and take the mu with highest pt
+        events_llmu, lepton1, lepton2, Sel_Mu = FinalFakeCandidate_sel(events_llmu, lepton1, lepton2, 'muon')
 
-        out[f'sumw_eSel'][self.ds] += ak.sum(events_Ze.genWeight)
-        out[f'n_ev_eSel'][self.ds] += len(events_Ze)
+        out[f'sumw_muSel'][self.ds] += ak.sum(events_llmu.genWeight)
+        out[f'n_ev_muSel'][self.ds] += len(events_llmu)
 
         # Save bjets candidates
-        bjet_candidates(events_Ze, lepton1, lepton2, Sel_e, self.period)
+        bjet_candidates(events_llmu, lepton1, lepton2, Sel_Mu, self.period)
 
-        return events_Ze, lepton1, lepton2, Sel_e
+        return events_llmu, lepton1, lepton2, Sel_Mu
     
-    def save_anatuple_Ze(self, events, lepton1, lepton2, SelElectron, tag):
+    def save_anatuple_llmu(self, events, lepton1, lepton2, SelMuon, tag):
 
-        path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.period}/{tag}/Ze/{self.sample_name}/'
+        path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{self.period}/{tag}/llmu/{self.sample_name}/'
 
         if not os.path.exists(path):
             os.makedirs(path)
@@ -113,8 +114,6 @@ class HNLAnalysis_Ze(processor.ProcessorABC, HNLProcessor):
                 "run": np.array(events.run),
                 "MET_pt": np.array(events.SelMET['pt']),
                 "MET_phi": np.array(events.SelMET['phi']),
-                "IsLeptonPairMuons": np.array(ak.fill_none(abs(lepton1.pdgId) == 13, False)),
-                "IsLeptonPairElectron": np.array(ak.fill_none(abs(lepton1.pdgId) == 11, False)),
                 "nbjetsLoose": np.array(events.nbjetsLoose),
             }
 
@@ -127,11 +126,10 @@ class HNLAnalysis_Ze(processor.ProcessorABC, HNLProcessor):
 
         lst = save_anatuple_lepton(lepton2, lst, exclude_list, 'Lepton2')
 
-        lst = save_anatuple_lepton(SelElectron, lst, ['genPartIdx'], 'Electron')
+        lst = save_anatuple_lepton(SelMuon, lst, ['genPartIdx'], 'Muon')
 
         return save_file, lst
 
     def postprocess(self, accumulator):
         return accumulator
-
 

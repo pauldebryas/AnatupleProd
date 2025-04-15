@@ -109,11 +109,11 @@ class RunAnalysis(Task, HTCondorWorkflow, law.LocalWorkflow):
     
     def load_dataHLT(self):
         #adding data to the branches
-        if self.channel not in ['Zmu', 'Ze']:
+        if self.channel not in ['Zmu', 'Ze', 'llmu', 'lle']:
             raise RuntimeError(f"Incorrect channel name: {self.channel}")
-        if self.channel in ['Zmu']:
+        if self.channel in ['Zmu', 'llmu']:
             self.dataHLT='SingleMuon'
-        if self.channel in ['Ze']:
+        if self.channel in ['Ze', 'lle']:
             if self.periods == '2018':
                 self.dataHLT='EGamma'
             else:
@@ -123,12 +123,13 @@ class RunAnalysis(Task, HTCondorWorkflow, law.LocalWorkflow):
     def create_branch_map(self):
         files_to_pop ={
             'TTToSemiLeptonic': ["/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_233.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_237.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_242.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_262.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_265.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_272.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_273.root"]
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_237.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_242.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_262.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_265.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_272.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_273.root"
+                                ]
         }
         if not os.path.exists(os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'anatuple')):
             os.makedirs(os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'anatuple'))
@@ -217,12 +218,12 @@ class RunPostProcess(Task, HTCondorWorkflow, law.LocalWorkflow):
         
     def load_dataHLT(self):
         #adding data to the branches
-        if self.channel not in ['Zmu', 'Ze']:
+        if self.channel not in ['Zmu', 'Ze', 'llmu', 'lle']:
             raise RuntimeError(f"Incorrect channel name: {self.channel}")
 
-        if self.channel in ['Zmu']:
+        if self.channel in ['Zmu', 'llmu']:
             self.dataHLT='SingleMuon'
-        if self.channel in ['Ze']:
+        if self.channel in ['Ze', 'lle']:
             if self.periods == '2018':
                 self.dataHLT='EGamma'
             else:
@@ -230,17 +231,16 @@ class RunPostProcess(Task, HTCondorWorkflow, law.LocalWorkflow):
         return
 
     def create_branch_map(self):
-
         files_to_pop ={
             'TTToSemiLeptonic': ["/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_233.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_237.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_242.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_262.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_265.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_272.root",
-                                "/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_273.root"]
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_237.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_242.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_262.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_265.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_272.root",
+                                #"/eos/cms/store/group/phys_higgs/HLepRare/HTT_skim_v1/Run2_2018/TTToSemiLeptonic/nanoHTT_273.root"
+                                ]
         }
-
         # load MC branches 
         data_samples_list , branches_RunAnalysis = self.load_samples(files_to_pop)
         self.load_dataHLT()
@@ -282,8 +282,9 @@ class RunPostProcess(Task, HTCondorWorkflow, law.LocalWorkflow):
         merged_files_pkl = []
         for file in merged_files_root:
             output_pkl_folder = os.path.join(self.output_anatuple(), self.tag, self.channel, 'cutflow_pkl')
+            tmp_pkl_folder = os.path.join(self.output_anatuple(), self.tag, 'tmp', self.channel, 'cutflow_pkl')
             filename = file.split('/')[-1]
-            pkl_file = os.path.join(output_pkl_folder, filename.replace('_anatuple.root', '')+'_cutflow.pkl')
+            pkl_file = os.path.join(tmp_pkl_folder, filename.replace('_anatuple.root', '')+'_cutflow.pkl')
             merged_files_pkl.append(pkl_file)
         output_file_pkl = os.path.join(output_pkl_folder, f'{sample_name}_cutflow.pkl')
 
@@ -302,18 +303,18 @@ class RunPostProcess(Task, HTCondorWorkflow, law.LocalWorkflow):
         merge_pkl_files(merged_files_pkl, output_file_pkl)
         print('')
 
-        # remove root files
-        print('remove root files')
-        for file in merged_files_root:
-            print('Run the folowing command:')
-            print(f"os.remove({file})")
-            #os.remove(file)
-        print('')
+        # # remove root files
+        # print('remove root files')
+        # for file in merged_files_root:
+        #     print('Run the folowing command:')
+        #     print(f"os.remove({file})")
+        #     os.remove(file)
+        # print('')
 
-        # remove pkl files
-        print('remove pkl files')
-        for file in merged_files_pkl:
-            print('Run the folowing command:')
-            print(f"os.remove({file})")
-            #os.remove(file)
+        # # remove pkl files
+        # print('remove pkl files')
+        # for file in merged_files_pkl:
+        #     print('Run the folowing command:')
+        #     print(f"os.remove({file})")
+        #     os.remove(file)
 

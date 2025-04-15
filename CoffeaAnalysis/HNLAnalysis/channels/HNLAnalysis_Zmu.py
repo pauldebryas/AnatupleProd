@@ -5,7 +5,7 @@ from collections import defaultdict
 import copy
 import os
 
-from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_lepton, save_Event, add_gen_matching_info
+from CoffeaAnalysis.HNLAnalysis.helpers import save_anatuple_lepton, save_Event, add_gen_matching_info, bjet_candidates
 from CoffeaAnalysis.HNLAnalysis.helpers import ll_from_Z_sel, FinalLL_sel
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
@@ -88,6 +88,9 @@ class HNLAnalysis_Zmu(processor.ProcessorABC, HNLProcessor):
         out[f'sumw_muSel'][self.ds] += ak.sum(events_Zmu.genWeight)
         out[f'n_ev_muSel'][self.ds] += len(events_Zmu)
 
+        # Save bjets candidates
+        bjet_candidates(events_Zmu, lepton1, lepton2, Sel_Mu, self.period)
+
         return events_Zmu, lepton1, lepton2, Sel_Mu
     
     def save_anatuple_Zmu(self, events, lepton1, lepton2, SelMuon, tag):
@@ -112,7 +115,8 @@ class HNLAnalysis_Zmu(processor.ProcessorABC, HNLProcessor):
                 "MET_pt": np.array(events.SelMET['pt']),
                 "MET_phi": np.array(events.SelMET['phi']),
                 "IsLeptonPairMuons": np.array(ak.fill_none(abs(lepton1.pdgId) == 13, False)),
-                "IsLeptonPairElectron": np.array(ak.fill_none(abs(lepton1.pdgId) == 11, False))
+                "IsLeptonPairElectron": np.array(ak.fill_none(abs(lepton1.pdgId) == 11, False)),
+                "nbjetsLoose": np.array(events.nbjetsLoose),
             }
 
         if self.mode == 'signal':

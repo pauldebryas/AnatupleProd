@@ -230,20 +230,11 @@ def bjet_candidates(events, Lepton1, Lepton2, Lepton3, period, delta_r_cut = 0.5
     drcut_jetslep1 = delta_r(Lepton1,jets_candidates) > delta_r_cut
     drcut_jetslep2 = delta_r(Lepton2,jets_candidates) > delta_r_cut
     drcut_jetslep3 = delta_r(Lepton3,jets_candidates) > delta_r_cut
-
-    # save also info of nbjets when we remove the dR condition with Taus 
-    if ('rawDeepTau2017v2p1VSe' in Lepton2.fields) & ('rawDeepTau2017v2p1VSe' in Lepton3.fields):
-        bjets_candidates_withoutdRTau = jets_candidates[drcut_jetslep1]
-    if ('rawDeepTau2017v2p1VSe' not in Lepton2.fields)  & ('rawDeepTau2017v2p1VSe' in Lepton3.fields) :
-        bjets_candidates_withoutdRTau = jets_candidates[drcut_jetslep1 & drcut_jetslep2]
     
     bjets_candidates = jets_candidates[drcut_jetslep1 & drcut_jetslep2 & drcut_jetslep3]
 
     #save bjets in events
     events['nbjetsLoose'] = ak.num(bjets_candidates[bjets_candidates.btagDeepFlavB > deepJet_wp_value])
-    events['nbjetsLooseWithoutdRTau'] = ak.num(bjets_candidates_withoutdRTau[bjets_candidates_withoutdRTau.btagDeepFlavB > deepJet_wp_value])
-    events['bjets'] = bjets_candidates
-
     return 
 
 def bjet_info(events):
@@ -687,3 +678,74 @@ def add_gen_matching_info(events, lepton):
         # Preserve structure and ensure correct length
         lepton[f"MatchingGenPart_{feature}"] = ak.fill_none(ak.firsts(feature_data), np.nan)      
     return lepton
+
+def OSOF_sel(events):
+    """
+    Filters events with two light leptons (one electron, one muon) satisfying:
+        - Opposite charges
+        - Opposite flavor 
+        - l1/l2 iso < 0.15 
+    Selects the pair with the smallest mean isolation.
+    
+    Parameters:
+        events: awkward array of NanoEvent objects.
+    Returns:
+        Tuple (events, lepton1, lepton2) where lepton1 and lepton2 
+        are the filtered lepton collections.
+    """
+    # Define lepton collections
+    muons = events.SelMuon
+    electrons = events.SelElectron
+    
+    # Create all possible electron-muon pairs
+    emu_pairs = ak.cartesian({"lep1": electrons, "lep2": muons}, axis=1)
+    
+    # Apply selection criteria
+    opp_sign = emu_pairs.lep1.charge * emu_pairs.lep2.charge < 0
+    relIsolep1 = emu_pairs.lep1.pfRelIso03_all < 0.15
+    relIsolep2 = emu_pairs.lep2.pfRelIso03_all < 0.15
+    valid_pairs = emu_pairs[opp_sign & relIsolep1 & relIsolep2]
+    
+    # Select the events with valid pairs
+    cut = ak.num(valid_pairs) > 0
+    events_with_valid_pairs = events[cut]
+    
+    # Select the pair with the smallest mean isolation per event
+    def select_best_pair(pairs):
+        mean_iso = (pairs.lep1.pfRelIso03_all + pairs.lep2.pfRelIso03_all) / 2
+        best_pair_idx = ak.argmin(mean_iso, axis=1)
+        local_idx = ak.local_index(pairs, axis=1)
+        mask = local_idx == best_pair_idx[:, None]
+        return pairs[mask]
+    
+    best_pairs = select_best_pair(valid_pairs[cut])
+    lepton1 = best_pairs.lep1[:,0]
+    lepton2 = best_pairs.lep2[:,0]
+    
+    return events_with_valid_pairs, lepton1, lepton2
+
+def FinalFakeCandidate_sel(events, Sel_Lepton1, Sel_Lepton2, lepton_type, delta_r_cut = 0.5):
+    ''' Select Fake Light Lepton candidate with dr(Sel_Lepton1,Lepton)>0.5 and dr(Sel_Lepton2,Lepton)>0.5 
+        take the one with highest pt
+    '''
+
+    # Define lepton collections
+    if lepton_type == 'muon':
+        leptons = events.SelMuon
+    if lepton_type == 'electron':
+        leptons = events.SelElectron
+
+    LL_canditates = leptons[(delta_r(Sel_Lepton1, leptons) > delta_r_cut) & (delta_r(Sel_Lepton2,leptons)> delta_r_cut)]
+
+    #make sure at least 1 satisfy this condition
+    cut = ak.num(LL_canditates) >= 1
+    events = events[cut]
+    Sel_Lepton1 = Sel_Lepton1[cut]
+    Sel_Lepton2 = Sel_Lepton2[cut]
+    LL_canditates = LL_canditates[cut]
+
+    Sel_LL = LL_canditates[ak.max(LL_canditates.pt, axis=-1) == LL_canditates.pt]
+
+    Sel_LL = Sel_LL[:,0]
+
+    return events, Sel_Lepton1, Sel_Lepton2, Sel_LL
