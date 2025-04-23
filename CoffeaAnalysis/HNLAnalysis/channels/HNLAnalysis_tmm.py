@@ -10,7 +10,7 @@ from CoffeaAnalysis.HNLAnalysis.helpers import IsoMuon_mask, Trigger_Muon_sel, F
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode):
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode, sample_name):
         HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode)
         self.acc_dict = {}
         self.selections = self.get_selections()
@@ -18,9 +18,10 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
             self.acc_dict[f'n_ev_{selection}'] = defaultdict(int)
             self.acc_dict[f'sumw_{selection}'] = defaultdict(int)
         self._accumulator = self.acc_dict
+        self.sample_name = sample_name
 
         #the corresponding data sample for tmm channel (HLT=IsoMu24) 
-        self.dataHLT = 'SingleMuon'
+        #self.dataHLT = 'SingleMuon'
 
     @property
     def accumulator(self):
@@ -214,7 +215,7 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
 
         exclude_list = ['genPartIdx']
         
-        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tmm', save_weightcorr)
+        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tmm', save_weightcorr, self.sample_name)
 
         #info specific to the channel
         lst["nAdditionalMuon"] = np.array(events.nAdditionalMuon)
@@ -233,8 +234,8 @@ class HNLAnalysis_tmm(processor.ProcessorABC, HNLProcessor):
         Sel_Muon_ptmax = ak.where(mask_ptmax, Sel_Muon, Sel_Muon2)
         Sel_Muon_ptmin = ak.where(~mask_ptmax, Sel_Muon, Sel_Muon2)
 
-        lst = save_anatuple_lepton(Sel_Muon_ptmax, lst, exclude_list, 'Muon1')
-        lst = save_anatuple_lepton(Sel_Muon_ptmin, lst, exclude_list, 'Muon2')
+        lst = save_anatuple_lepton(events, Sel_Muon_ptmax, lst, exclude_list, 'Muon1')
+        lst = save_anatuple_lepton(events, Sel_Muon_ptmin, lst, exclude_list, 'Muon2')
         lst = save_anatuple_tau(events, Sel_Tau, lst, exclude_list, self.mode, 'Tau')
 
         return save_file, lst

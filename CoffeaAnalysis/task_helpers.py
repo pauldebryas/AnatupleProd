@@ -1,5 +1,7 @@
 import os
 import shutil 
+import pickle
+from itertools import islice
 
 def files_from_dir(d):
     '''Returns a list of all ROOT files in the passed directory.
@@ -42,7 +44,7 @@ def files_from_path(path):
 def cleanup_ds(ds, output_tmp_folder, output_root_folder):
     ''' Hadd and then move anatuple rootfiles from tmp folder to CoffeaAnalysis/results
     '''
-    debug_mode = False
+    debug_mode = True
 
     if debug_mode == True:
         print('Apply cleanup_ds to '+ ds)
@@ -61,6 +63,11 @@ def cleanup_ds(ds, output_tmp_folder, output_root_folder):
     if len(filelist) == 0:
         if debug_mode == True:
             print("No file found for " + ds)
+            # create a dummy output file 
+            output_file_name = output_root_folder + '/' + ds + '_anatuple.root'
+            import ROOT
+            file = ROOT.TFile(output_file_name, "CREATE") 
+            file.Close()
         return
 
     if len(filelist) == 1:
@@ -138,3 +145,67 @@ def cleanup_ds(ds, output_tmp_folder, output_root_folder):
         return
     
     return
+
+def split_list(files, nSublist):
+    """Splits a list of files into nSublist sublists with approximately equal size."""
+    avg = len(files) // nSublist
+    remainder = len(files) % nSublist
+    result = []
+    iterator = iter(files)
+    
+    for i in range(nSublist):
+        size = avg + (1 if i < remainder else 0)
+        result.append(list(islice(iterator, size)))
+
+    return result
+
+def get_size_in_gb(path):
+    total_size = 0
+    
+    # Iterate through all files in the directory
+    for root, _, files in os.walk(path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            
+            # Check if the file exists before getting its size
+            if os.path.isfile(file_path):
+                total_size += os.path.getsize(file_path)
+    
+    # Convert bytes to gigabytes
+    return round(total_size / (1024 ** 3))
+
+def merge_pkl_files(input_files, output_file):
+
+    print(f"Merge {len(input_files)} files into {output_file}")
+
+    if not input_files:
+        print("No input files provided.")
+        return
+
+    merged_data = None  # Initialize as None to take the structure from the first file
+
+    for file in input_files:
+        if not os.path.exists(file):
+            print(f"Warning: {file} not found, skipping...")
+            continue
+
+        with open(file, "rb") as f:
+            try:
+                data = pickle.load(f)
+                if merged_data is None:
+                    # Initialize merged_data with the structure of the first file
+                    merged_data = {key: {subkey: value for subkey, value in subdict.items()} 
+                                   for key, subdict in data.items()}
+                else:
+                    # Sum values from subsequent files
+                    for key in data:
+                        for subkey in data[key]:
+                            merged_data[key][subkey] += data[key][subkey]
+
+            except Exception as e:
+                print(f"Error loading {file}: {e}")
+
+    # Save the merged result
+    if merged_data is not None:
+        with open(output_file, "wb") as f:
+            pickle.dump(merged_data, f)

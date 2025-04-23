@@ -5,6 +5,7 @@ import os
 import yaml
 
 law.contrib.load("htcondor")
+from CoffeaAnalysis.task_helpers import files_from_path, get_size_in_gb, split_list
 
 class Task(law.Task):
     """
@@ -53,7 +54,69 @@ class Task(law.Task):
         for sample, value in xsec_load.items():
             self.xsecs[sample] = value['crossSec']
             self.xsecs_unc[sample] = value['unc']
-                    
+
+    def load_samples(self, files_to_pop = {}):
+        MC_branches = {}
+        data_samples_list = {}
+    
+        self.load_sample_configs()
+        self.load_global_params()
+        self.load_xsecs()
+        branch_index = 0
+        for period, samples in self.samples.items():
+            for sample_name in sorted(samples.keys()):
+                if sample_name in self.excluded_samples[period]:
+                    continue
+                sampleType = samples[sample_name].get('sampleType', None)
+                if sampleType is None or len(sampleType) == 0:
+                    self.publish_message("Missing sampleType for sample: {}".format(sample_name))
+                    raise RuntimeError("Missing sampleType has been detected.")
+                path_to_sample = os.path.join(os.path.join(self.central_path_nanoAOD(), f'Run2_{period}', sample_name))
+                size_gb = get_size_in_gb(path_to_sample)
+                #if size_gb> 10:
+                #    print(f'size of {sample_name}: {size_gb}Gb \n')
+                if os.path.exists(path_to_sample):
+                    files = files_from_path(path_to_sample)
+                else:
+                    self.publish_message("Missing sample path for sample: {}".format(path_to_sample))
+                    raise RuntimeError("Non existing sample path has been detected.")
+                
+                if sampleType != 'data':
+                    crossSection = samples[sample_name].get('crossSection', None)
+                    if crossSection is None or len(crossSection) == 0:
+                        self.publish_message("Missing crossSection reference for sample: {}".format(sample_name))
+                        raise RuntimeError("Missing crossSection has been detected.")
+                    else:
+                        get_Xsec = self.xsecs.get(crossSection, None)
+                        if type(get_Xsec) == str:
+                            #self.publish_message("Warning: crossSection format for sample: {}".format(sample_name))
+                            get_Xsec = eval(get_Xsec)
+                        if get_Xsec == None:
+                            self.publish_message(f"Warning: crossSection in crossSections13TeV.yaml missing for sample: {sample_name} ")
+        
+                    if size_gb >= 10:
+                        SplitInt = 3
+                        subFiles = split_list(files, SplitInt)
+                        for nSubFile in range(SplitInt):
+                            files_split = subFiles[nSubFile]
+                            output_file_split = os.path.join(self.output_anatuple(), self.tag, 'tmp',self.channel, 'anatuple', sample_name+str(f'_{nSubFile}_anatuple.root') )
+                            if sample_name in files_to_pop.keys():
+                                for file_to_pop in files_to_pop[sample_name]:
+                                    if file_to_pop in files_split:
+                                        files_split.remove(file_to_pop)
+                                MC_branches[branch_index] = (sample_name+str(f'_{nSubFile}'), get_Xsec, sampleType, files_split, output_file_split, sample_name)
+                            else:
+                                MC_branches[branch_index] = (sample_name+str(f'_{nSubFile}'), get_Xsec, sampleType, files_split, output_file_split, sample_name)
+                            branch_index += 1
+                    else:
+                        output_file = os.path.join(self.output_anatuple(), self.tag, self.channel, 'anatuple', sample_name+str('_anatuple.root') )
+                        MC_branches[branch_index] = (sample_name, get_Xsec, sampleType, files, output_file, sample_name)
+                        branch_index += 1
+                else:
+                    data_samples_list[sample_name] = files_from_path(path_to_sample)
+        
+        return data_samples_list , MC_branches
+    
     def output_anatuple(self):
         output_anatuple_path = os.path.join(self.central_path_anatuple(),'anatuple' , self.periods)
         os.makedirs(output_anatuple_path, exist_ok=True)
@@ -106,7 +169,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     """
 
     max_runtime = law.DurationParameter(
-        default=12.0, 
+        default=24.0, 
         unit="h", 
         significant=False, 
         description="maximum runtime, default unit is hours, default: 12"

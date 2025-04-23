@@ -83,7 +83,7 @@ law run name_of_the_task --parameters1 param1 --parameters1 param2 ... --CreateN
 - CreateVomsProxy: creates a new proxy in order to access DAS: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideVomsFAQ
 - CreateSamplesConfigFile: Create yaml file with the sample list that have been processed for a specific year. Output is in config/samples_{period}.yaml.
 - RunCounter: save in a .pkl file for each year the original sum weights of the events (selected and not selected) in each samples. Needed for the Analysis task.
-- Analysis: skim HNL signal, background and data using Coffea (Columnar Object Framework For Effective Analysis). This task require additional argument --tag which will be the name of the folder where we store the results. 
+- RunAnalysis: skim HNL signal, background and data using Coffea (Columnar Object Framework For Effective Analysis). This task require additional argument --tag which will be the name of the folder where we store the results. 
 The results are stored in two type of files (in CoffeaAnalysis/results/):
     - .pkl which save the sumw of the events through the cutflow 
     - .root which save the remaining events after all the cut with needed info for the events and the selected objects.

@@ -11,7 +11,7 @@ from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 # test with Ele32_WPTight_Gsf_L1DoubleEG trigger
 class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode):
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode, sample_name):
         HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode)
         self.acc_dict = {}
         self.selections = self.get_selections()
@@ -19,6 +19,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
             self.acc_dict[f'n_ev_{selection}'] = defaultdict(int)
             self.acc_dict[f'sumw_{selection}'] = defaultdict(int)
         self._accumulator = self.acc_dict
+        self.sample_name = sample_name
 
     @property
     def accumulator(self):
@@ -232,7 +233,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
     def save_anatuple_tte(self, events, Sel_Electron, Sel_Tau1, Sel_Tau2, tag, save_weightcorr=True):
         exclude_list = ['genPartIdx']
         
-        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tte', save_weightcorr)
+        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tte', save_weightcorr, self.sample_name)
 
         #info specific to the channel
         lst["nAdditionalElectron"] = np.array(events.nAdditionalElectron)
@@ -250,7 +251,7 @@ class HNLAnalysis_tte(processor.ProcessorABC, HNLProcessor):
         Sel_Tau_ptmax = ak.where(mask_ptmax, Sel_Tau1, Sel_Tau2)
         Sel_Tau_ptmin = ak.where(~mask_ptmax, Sel_Tau1, Sel_Tau2)
 
-        lst = save_anatuple_lepton(Sel_Electron, lst, exclude_list, 'Electron')
+        lst = save_anatuple_lepton(events, Sel_Electron, lst, exclude_list, 'Electron')
         lst = save_anatuple_tau(events, Sel_Tau_ptmax, lst, exclude_list, self.mode, 'Tau1')
         lst = save_anatuple_tau(events, Sel_Tau_ptmin, lst, exclude_list, self.mode, 'Tau2')
 

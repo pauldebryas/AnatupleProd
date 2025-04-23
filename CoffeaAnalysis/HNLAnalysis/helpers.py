@@ -292,20 +292,20 @@ def save_Event(save_file, lst, Tree_name):
         file[Tree_name] = lst
     return
 
-def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
+def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr, sample_name):
     ''' Return a list of common information to save (make sure save_file is not overwrite)
     '''
-    path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{period}/{tag}/{channel}/{ds}/'
+    path = f'/afs/cern.ch/work/p/pdebryas/HNL/tmp/{period}/{tag}/{channel}/{sample_name}/'
 
     if not os.path.exists(path):
         os.makedirs(path)
 
-    save_file = path + f'{ds}_anatuple_0.root'
+    save_file = path + f'{sample_name}_anatuple_0.root'
 
     i = 0
     while os.path.isfile(save_file):
         i = i+1
-        save_file = path + f'{ds}_anatuple_{str(i)}.root'
+        save_file = path + f'{sample_name}_anatuple_{str(i)}.root'
     
     lst = { "event": np.array(events.event),
             "genWeight": np.array(events.genWeight),
@@ -324,27 +324,31 @@ def save_anatuple_common(ds, events, tag, period, channel, save_weightcorr):
 
     return save_file, lst
 
-def save_anatuple_lepton(Sel_Lep, lst, exclude_list, name):
+def save_anatuple_lepton(events, Sel_Lep, lst, exclude_list, name):
     ''' Update the list with all the informations contains in Sel_Lep object (not in exclude_list)
         name: name of the branch in the rootfile
     '''
-    #also add cone corrected p_t
-    Sel_Lep[f"ConeCorrectedPt"] = Sel_Lep.pt*(1+Sel_Lep.pfRelIso03_all)
-    for field in Sel_Lep.fields:
-        if field not in exclude_list:
-            lst[f"{name}_{field}"] = np.array(Sel_Lep[field])
-        
+    if len(events)!= 0:
+        #also add cone corrected p_t
+        MatchingJet = matching_jet(events, Sel_Lep)
+        Sel_Lep[f"ConeCorrectedPt"] = np.where(MatchingJet['valid'], MatchingJet.pt, Sel_Lep.pt*(1+Sel_Lep.pfRelIso03_all-0.15))
+        Sel_Lep[f"MatchingJetValid"] = MatchingJet['valid']
+        for field in Sel_Lep.fields:
+            if field not in exclude_list:
+                lst[f"{name}_{field}"] = np.array(Sel_Lep[field])
+            
     return lst
 
-def matching_jet(events, Tau):
-    ''' Return matching Jet of Tau object
+
+def matching_jet(events, Lepton):
+    ''' Return matching Jet of Lepton object
     Jet valid is True if it exist a Jet that match the tau
     '''
-    jetIdx = ak.to_numpy(ak.unflatten(Tau.jetIdx, 1)).data
+    jetIdx = ak.to_numpy(ak.unflatten(Lepton.jetIdx, 1)).data
     jetIdx[jetIdx < 0] = 0
     Jet = events.SelJet[ak.local_index(events.SelJet) == jetIdx]
 
-    Jet['valid'] = Tau.jetIdx >= 0
+    Jet['valid'] = Lepton.jetIdx >= 0
     return Jet
 
 def matching_Genjet(events, Tau):
@@ -370,7 +374,7 @@ def save_anatuple_tau(events, Sel_Tau, lst, exclude_list, mode, name):
         Sel_Tau['isDirectPromptTauDecayProduct'] = np.array(ak.flatten((GenTauMatch.statusFlags & (1 << 5)) != 0)) #isDirectPromptTauDecayProduct
     #save Tau info
     Sel_Tau['pfRelIso03_all'] = Sel_Tau.rawIsodR03
-    lst = save_anatuple_lepton(Sel_Tau, lst, exclude_list, name)
+    lst = save_anatuple_lepton(events, Sel_Tau, lst, exclude_list, name)
 
     #save matching Jet info
     if len(Sel_Tau) == 0:

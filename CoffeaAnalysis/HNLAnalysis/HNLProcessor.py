@@ -46,8 +46,12 @@ class HNLProcessor():
             print(f'Processing: {ds} ({len(events)} events)')
 
         # Save initial SumGenWeights 
-        out['sumw_init'][ds] += ak.sum(events.genWeight)
-        out['n_ev_init'][ds] += len(events)
+        if self.dataHLT in ds:
+            out['sumw_init'][ds[0:-1]] += ak.sum(events.genWeight)
+            out['n_ev_init'][ds[0:-1]] += len(events)
+        else:
+            out['sumw_init'][ds] += ak.sum(events.genWeight)
+            out['n_ev_init'][ds] += len(events)
 
         # defining the mode
         mode ='MCbackground' # default mode

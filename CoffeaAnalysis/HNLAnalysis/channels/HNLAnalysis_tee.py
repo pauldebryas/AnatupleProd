@@ -10,7 +10,7 @@ from CoffeaAnalysis.HNLAnalysis.helpers import IsoElectron_mask, Trigger_Electro
 from CoffeaAnalysis.HNLAnalysis.HNLProcessor import HNLProcessor
 
 class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
-    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode):
+    def __init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode, sample_name):
         HNLProcessor.__init__(self, stitched_list, tag, xsecs, periods, dataHLT, debugMode)
         self.acc_dict = {}
         self.selections = self.get_selections()
@@ -18,6 +18,7 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
             self.acc_dict[f'n_ev_{selection}'] = defaultdict(int)
             self.acc_dict[f'sumw_{selection}'] = defaultdict(int)
         self._accumulator = self.acc_dict
+        self.sample_name = sample_name
 
     @property
     def accumulator(self):
@@ -232,7 +233,7 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
 
         exclude_list = ['genPartIdx']
         
-        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tee', save_weightcorr)
+        save_file, lst = save_anatuple_common(self.ds, events, tag, self.period, 'tee', save_weightcorr, self.sample_name)
 
         #info specific to the channel
         lst["nAdditionalElectron"] = np.array(events.nAdditionalElectron)
@@ -251,8 +252,8 @@ class HNLAnalysis_tee(processor.ProcessorABC, HNLProcessor):
         Sel_Electron_ptmax = ak.where(mask_ptmax, Sel_Electron, Sel_Electron2)
         Sel_Electron_ptmin = ak.where(~mask_ptmax, Sel_Electron, Sel_Electron2)
 
-        lst = save_anatuple_lepton(Sel_Electron_ptmax, lst, exclude_list, 'Electron1')
-        lst = save_anatuple_lepton(Sel_Electron_ptmin, lst, exclude_list, 'Electron2')
+        lst = save_anatuple_lepton(events, Sel_Electron_ptmax, lst, exclude_list, 'Electron1')
+        lst = save_anatuple_lepton(events, Sel_Electron_ptmin, lst, exclude_list, 'Electron2')
         lst = save_anatuple_tau(events, Sel_Tau, lst, exclude_list, self.mode, 'Tau')
 
         return save_file, lst
